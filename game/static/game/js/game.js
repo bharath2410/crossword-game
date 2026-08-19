@@ -2,6 +2,7 @@ const GRID_SIZE = 10;
 const RACK_SIZE = 7;
 const MATCH_DURATION = 300;
 
+// DOM Elements
 const boardEl = document.getElementById("board");
 const rackEl = document.getElementById("rack");
 const shuffleBtn = document.getElementById("shuffle-btn");
@@ -29,6 +30,7 @@ const modalTitle = document.getElementById("modal-title");
 const modalBody = document.getElementById("modal-body");
 const modalClose = document.getElementById("modal-close");
 
+// State Variables
 let selectedTileData = null;
 let currentScore = 0;
 let botScore = 0;
@@ -46,8 +48,6 @@ let cursorRow = 4, cursorCol = 4;
 let timeLeft = MATCH_DURATION;
 let timerInterval = null;
 let isGameOver = false;
-let socket = null;
-let currentRoomCode = null;
 
 // 100 Tiles including 2 Blank Wildcards (*)
 const FULL_BAG = [
@@ -118,23 +118,27 @@ const specialTiles = {
   "4,4": { cls: "center-star", text: "★" }, "4,5": { cls: "center-star", text: "★" }
 };
 
-for (let r = 0; r < GRID_SIZE; r++) {
-  for (let c = 0; c < GRID_SIZE; c++) {
-    const cell = document.createElement("div");
-    cell.className = "cell";
-    cell.dataset.row = r;
-    cell.dataset.col = c;
-    const special = specialTiles[`${r},${c}`];
-    if (special) {
-      cell.classList.add(special.cls);
-      cell.textContent = special.text;
+if (boardEl) {
+  boardEl.innerHTML = "";
+  for (let r = 0; r < GRID_SIZE; r++) {
+    for (let c = 0; c < GRID_SIZE; c++) {
+      const cell = document.createElement("div");
+      cell.className = "cell";
+      cell.dataset.row = r;
+      cell.dataset.col = c;
+      const special = specialTiles[`${r},${c}`];
+      if (special) {
+        cell.classList.add(special.cls);
+        cell.textContent = special.text;
+      }
+      cell.addEventListener("pointerdown", () => handleCellClick(cell, r, c));
+      boardEl.appendChild(cell);
     }
-    cell.addEventListener("pointerdown", () => handleCellClick(cell, r, c));
-    boardEl.appendChild(cell);
   }
 }
 
 function setCursor(r, c) {
+  if (!boardEl) return;
   boardEl.querySelectorAll(".cell").forEach(cell => cell.classList.remove("keyboard-cursor"));
   cursorRow = Math.max(0, Math.min(GRID_SIZE - 1, r));
   cursorCol = Math.max(0, Math.min(GRID_SIZE - 1, c));
@@ -148,7 +152,7 @@ function drawFromBag() {
   if (tileBag.length === 0) return null;
   const idx = Math.floor(Math.random() * tileBag.length);
   const letter = tileBag.splice(idx, 1)[0];
-  bagCountEl.textContent = tileBag.length;
+  if (bagCountEl) bagCountEl.textContent = tileBag.length;
   return letter;
 }
 
@@ -162,6 +166,7 @@ function refillRack() {
 }
 
 function renderRack() {
+  if (!rackEl) return;
   rackEl.innerHTML = "";
   playerRack.forEach(tile => {
     const tileDiv = document.createElement("div");
@@ -170,7 +175,6 @@ function renderRack() {
     tileDiv.dataset.letter = tile.letter;
     tileDiv.innerHTML = `${tile.letter === '*' ? '★' : tile.letter}<span class="point-subscript">${LETTER_POINTS[tile.letter]}</span>`;
 
-    // Tap Support
     tileDiv.addEventListener("pointerdown", () => {
       if (isBotThinking || isGameOver) return;
       playAudio('tap');
@@ -187,12 +191,11 @@ function renderRack() {
   });
 }
 
-// 3. Tile Placement & Wildcard Prompt
+// 3. Tile Placement & Wildcard Choice
 async function handleCellClick(cell, r, c) {
   if (isBotThinking || isGameOver) return;
   setCursor(r, c);
 
-  // Individual Recall
   if (cell.classList.contains("selected")) {
     const moveIdx = pendingMoves.findIndex(m => m.row === r && m.col === c);
     if (moveIdx !== -1) {
@@ -214,7 +217,6 @@ async function handleCellClick(cell, r, c) {
   let assignedChar = selectedTileData.letter;
   let isBlank = false;
 
-  // Wildcard Picker Modal
   if (selectedTileData.letter === '*') {
     isBlank = true;
     assignedChar = await promptWildcardChoice();
@@ -259,7 +261,7 @@ function promptWildcardChoice() {
   });
 }
 
-// 4. Keyboard Navigation
+// 4. Keyboard Support
 window.addEventListener("keydown", (e) => {
   if (isGameOver || isBotThinking || !modalOverlay.classList.contains("hidden")) return;
   const key = e.key.toUpperCase();
@@ -274,7 +276,6 @@ window.addEventListener("keydown", (e) => {
       handleCellClick(targetCell, cursorRow, cursorCol);
     }
   } else if (/^[A-Z]$/.test(key)) {
-    // Find matching letter or wildcard in player's rack
     const match = playerRack.find(t => {
       const el = rackEl.querySelector(`[data-id='${t.id}']`);
       return (t.letter === key || t.letter === '*') && el && el.style.display !== "none";
@@ -284,16 +285,17 @@ window.addEventListener("keydown", (e) => {
       const targetCell = boardEl.querySelector(`[data-row='${cursorRow}'][data-col='${cursorCol}']`);
       if (targetCell && !targetCell.classList.contains("occupied") && !targetCell.classList.contains("selected")) {
         handleCellClick(targetCell, cursorRow, cursorCol);
-        setCursor(cursorRow, cursorCol + 1); // auto-advance
+        setCursor(cursorRow, cursorCol + 1);
       }
     }
-  } else if (key === "ENTER") {
+  } else if (key === "ENTER" && submitBtn) {
     submitBtn.click();
   }
 });
 
 // 5. Live Word Preview
 function updateLivePreview() {
+  if (!wordPreview) return;
   if (pendingMoves.length === 0) {
     wordPreview.classList.add("hidden");
     return;
@@ -303,122 +305,136 @@ function updateLivePreview() {
   const word = sorted.map(m => m.char).join("");
   const estScore = sorted.reduce((sum, m) => sum + (m.is_blank ? 0 : LETTER_POINTS[m.char] || 1), 0);
 
-  previewWordEl.textContent = word;
-  previewScoreEl.textContent = `+${estScore} pts`;
+  if (previewWordEl) previewWordEl.textContent = word;
+  if (previewScoreEl) previewScoreEl.textContent = `+${estScore} pts`;
   wordPreview.classList.remove("hidden");
 }
 
-// 6. Controls & Shuffle Animation
-shuffleBtn.addEventListener("click", () => {
-  playAudio('tap');
-  resetPendingMoves();
-  const tiles = rackEl.querySelectorAll(".rack-tile");
-  tiles.forEach(t => t.classList.add("shuffling"));
-  setTimeout(() => {
-    playerRack.sort(() => Math.random() - 0.5);
-    renderRack();
-  }, 200);
-});
+// 6. Action Controls
+if (shuffleBtn) {
+  shuffleBtn.addEventListener("click", () => {
+    playAudio('tap');
+    resetPendingMoves();
+    const tiles = rackEl.querySelectorAll(".rack-tile");
+    tiles.forEach(t => t.classList.add("shuffling"));
+    setTimeout(() => {
+      playerRack.sort(() => Math.random() - 0.5);
+      renderRack();
+    }, 200);
+  });
+}
 
-swapBtn.addEventListener("click", () => {
-  if (isBotThinking || isGameOver) return;
-  playAudio('tap');
-  resetPendingMoves();
-  tileBag.push(...playerRack.map(t => t.letter));
-  playerRack = [];
-  refillRack();
-  showToast("Hand swapped!", "#f59e0b");
-});
+if (swapBtn) {
+  swapBtn.addEventListener("click", () => {
+    if (isBotThinking || isGameOver) return;
+    playAudio('tap');
+    resetPendingMoves();
+    tileBag.push(...playerRack.map(t => t.letter));
+    playerRack = [];
+    refillRack();
+    showToast("Hand swapped!", "#f59e0b");
+  });
+}
 
-clearBtn.addEventListener("click", () => {
-  playAudio('tap');
-  resetPendingMoves();
-});
+if (clearBtn) {
+  clearBtn.addEventListener("click", () => {
+    playAudio('tap');
+    resetPendingMoves();
+  });
+}
 
-newGameBtn.addEventListener("click", () => {
-  if (confirm("Start a new game?")) restartGame();
-});
+if (newGameBtn) {
+  newGameBtn.addEventListener("click", () => {
+    if (confirm("Start a new game?")) restartGame();
+  });
+}
 
-modeBtn.addEventListener("click", () => {
-  isAiMode = !isAiMode;
-  botScoreBadge.style.display = isAiMode ? "block" : "none";
-  botIndicator.textContent = isAiMode ? "🤖 AI Duel" : "👤 Solo Mode";
-  showToast(isAiMode ? "AI Duel Mode Enabled!" : "Solo Mode Enabled!", "#38bdf8");
-});
+if (modeBtn) {
+  modeBtn.addEventListener("click", () => {
+    isAiMode = !isAiMode;
+    if (botScoreBadge) botScoreBadge.style.display = isAiMode ? "flex" : "none";
+    if (botIndicator) botIndicator.textContent = isAiMode ? "🤖 AI Duel" : "👤 Solo Mode";
+    showToast(isAiMode ? "AI Duel Mode Enabled!" : "Solo Mode Enabled!", "#38bdf8");
+  });
+}
 
-// 7. Submit Move with Multi-Word Validation
-submitBtn.addEventListener("click", async () => {
-  if (isBotThinking || isGameOver) return;
-  if (pendingMoves.length === 0) {
-    playAudio('error');
-    showToast("Place letters on the board first!");
-    return;
-  }
+// 7. Submit Move
+if (submitBtn) {
+  submitBtn.addEventListener("click", async () => {
+    if (isBotThinking || isGameOver) return;
+    if (pendingMoves.length === 0) {
+      playAudio('error');
+      showToast("Place letters on the board first!");
+      return;
+    }
 
-  const currentBoard = {};
-  for (let r = 0; r < GRID_SIZE; r++) {
-    for (let c = 0; c < GRID_SIZE; c++) {
-      const cell = boardEl.querySelector(`[data-row='${r}'][data-col='${c}']`);
-      if (cell && cell.classList.contains("occupied")) {
-        currentBoard[`${r},${c}`] = cell.childNodes[0].textContent.trim();
+    const currentBoard = {};
+    for (let r = 0; r < GRID_SIZE; r++) {
+      for (let c = 0; c < GRID_SIZE; c++) {
+        const cell = boardEl.querySelector(`[data-row='${r}'][data-col='${c}']`);
+        if (cell && cell.classList.contains("occupied")) {
+          currentBoard[`${r},${c}`] = cell.childNodes[0].textContent.trim();
+        }
       }
     }
-  }
 
-  try {
-    const res = await fetch("/api/validate-word/", {
-      method: "POST",
-      headers: { "Content-Type": "application/json", "X-CSRFToken": getCookie("csrftoken") },
-      body: JSON.stringify({
-        board: currentBoard,
-        new_tiles: pendingMoves,
-        is_first_turn: isFirstTurn
-      })
-    });
-
-    const data = await res.json();
-
-    if (data.valid) {
-      playAudio('success');
-      currentScore += data.points;
-      scoreEl.textContent = currentScore;
-      isFirstTurn = false;
-      const primaryWord = data.words[0] || "";
-      if (primaryWord.length > bestWordPlayed.length) bestWordPlayed = primaryWord;
-      data.words.forEach(w => playedWordsHistory.push({ word: w, points: data.points, player: "You" }));
-
-      const anchor = pendingMoves[0];
-      spawnScoreFloater(`+${data.points}`, anchor.row, anchor.col);
-      if (data.points >= 20 || primaryWord.length >= 5) triggerConfetti();
-
-      pendingMoves.forEach(m => {
-        const cell = boardEl.querySelector(`[data-row='${m.row}'][data-col='${m.col}']`);
-        cell.className = "cell occupied" + (m.is_blank ? " wildcard" : "");
-        playerRack = playerRack.filter(t => t.id !== m.rackId);
+    try {
+      const res = await fetch("/api/validate-word/", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "X-CSRFToken": getCookie("csrftoken") },
+        body: JSON.stringify({
+          board: currentBoard,
+          new_tiles: pendingMoves,
+          is_first_turn: isFirstTurn
+        })
       });
 
-      pendingMoves = [];
-      wordPreview.classList.add("hidden");
-      showToast(data.message, "#10b981");
-      refillRack();
+      const data = await res.json();
 
-      if (isAiMode) triggerBotTurn();
-    } else {
+      if (data.valid) {
+        playAudio('success');
+        currentScore += data.points;
+        if (scoreEl) scoreEl.textContent = currentScore;
+        isFirstTurn = false;
+        const primaryWord = (data.words && data.words[0]) || "";
+        if (primaryWord.length > bestWordPlayed.length) bestWordPlayed = primaryWord;
+        if (data.words) {
+          data.words.forEach(w => playedWordsHistory.push({ word: w, points: data.points, player: "You" }));
+        }
+
+        const anchor = pendingMoves[0];
+        spawnScoreFloater(`+${data.points}`, anchor.row, anchor.col);
+        if (data.points >= 20 || primaryWord.length >= 5) triggerConfetti();
+
+        pendingMoves.forEach(m => {
+          const cell = boardEl.querySelector(`[data-row='${m.row}'][data-col='${m.col}']`);
+          cell.className = "cell occupied" + (m.is_blank ? " wildcard" : "");
+          playerRack = playerRack.filter(t => t.id !== m.rackId);
+        });
+
+        pendingMoves = [];
+        if (wordPreview) wordPreview.classList.add("hidden");
+        showToast(data.message, "#10b981");
+        refillRack();
+
+        if (isAiMode) triggerBotTurn();
+      } else {
+        playAudio('error');
+        showToast(data.message, "#ef4444");
+        resetPendingMoves();
+      }
+    } catch (err) {
       playAudio('error');
-      showToast(data.message, "#ef4444");
+      showToast("Network error!");
       resetPendingMoves();
     }
-  } catch (err) {
-    playAudio('error');
-    showToast("Network error!");
-    resetPendingMoves();
-  }
-});
+  });
+}
 
 // 8. Bot Execution
 async function triggerBotTurn() {
   isBotThinking = true;
-  botIndicator.textContent = "🤖 Bot thinking...";
+  if (botIndicator) botIndicator.textContent = "🤖 Bot thinking...";
 
   const currentBoard = {};
   for (let r = 0; r < GRID_SIZE; r++) {
@@ -442,7 +458,7 @@ async function triggerBotTurn() {
       if (data.success && data.move) {
         const move = data.move;
         botScore += move.points;
-        botScoreEl.textContent = botScore;
+        if (botScoreEl) botScoreEl.textContent = botScore;
         playedWordsHistory.push({ word: move.word, points: move.points, player: "Bot" });
 
         move.tiles.forEach(t => {
@@ -460,7 +476,7 @@ async function triggerBotTurn() {
       showToast("Bot skipped turn.", "#94a3b8");
     } finally {
       isBotThinking = false;
-      botIndicator.textContent = "🤖 AI Duel";
+      if (botIndicator) botIndicator.textContent = "🤖 AI Duel";
     }
   }, 1200);
 }
@@ -477,13 +493,19 @@ function spawnScoreFloater(text, r, c) {
 }
 
 const canvas = document.getElementById("confetti-canvas");
-const ctx = canvas.getContext("2d");
+const ctx = canvas ? canvas.getContext("2d") : null;
 let particles = [];
-function resizeCanvas() { canvas.width = window.innerWidth; canvas.height = window.innerHeight; }
+function resizeCanvas() {
+  if (canvas) {
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+  }
+}
 window.addEventListener("resize", resizeCanvas);
 resizeCanvas();
 
 function triggerConfetti() {
+  if (!ctx) return;
   for (let i = 0; i < 40; i++) {
     particles.push({
       x: window.innerWidth / 2, y: window.innerHeight / 2,
@@ -494,6 +516,7 @@ function triggerConfetti() {
   }
 }
 function updateConfetti() {
+  if (!ctx) return;
   ctx.clearRect(0, 0, canvas.width, canvas.height);
   particles.forEach((p, idx) => {
     p.x += p.vx; p.y += p.vy; p.vy += 0.25; p.life--;
@@ -512,7 +535,7 @@ function startTimer() {
     timeLeft--;
     const mins = String(Math.floor(timeLeft / 60)).padStart(2, '0');
     const secs = String(timeLeft % 60).padStart(2, '0');
-    timerText.textContent = `${mins}:${secs}`;
+    if (timerText) timerText.textContent = `${mins}:${secs}`;
     if (timeLeft <= 0) {
       clearInterval(timerInterval);
       triggerGameOver();
@@ -556,13 +579,15 @@ function triggerGameOver() {
 function restartGame() {
   if (timerInterval) clearInterval(timerInterval);
   modalOverlay.classList.add("hidden");
-  currentScore = 0; botScore = 0; scoreEl.textContent = "0";
+  currentScore = 0; botScore = 0;
+  if (scoreEl) scoreEl.textContent = "0";
   if (botScoreEl) botScoreEl.textContent = "0";
-  timeLeft = MATCH_DURATION; timerText.textContent = "05:00";
+  timeLeft = MATCH_DURATION;
+  if (timerText) timerText.textContent = "05:00";
   isGameOver = false; isFirstTurn = true; bestWordPlayed = "";
   pendingMoves = []; playerRack = []; playedWordsHistory = [];
   tileBag = [...FULL_BAG];
-  bagCountEl.textContent = tileBag.length;
+  if (bagCountEl) bagCountEl.textContent = tileBag.length;
 
   for (let r = 0; r < GRID_SIZE; r++) {
     for (let c = 0; c < GRID_SIZE; c++) {
@@ -572,13 +597,13 @@ function restartGame() {
       cell.textContent = special ? special.text : "";
     }
   }
-  wordPreview.classList.add("hidden");
+  if (wordPreview) wordPreview.classList.add("hidden");
   refillRack();
   startTimer();
   showToast("New match started!", "#38bdf8");
 }
 
-leaderboardBtn.addEventListener("click", showLeaderboard);
+if (leaderboardBtn) leaderboardBtn.addEventListener("click", showLeaderboard);
 async function showLeaderboard() {
   modalTitle.textContent = "🏆 Global Leaderboard";
   modalBody.innerHTML = `<p>Loading...</p>`;
@@ -598,17 +623,19 @@ async function showLeaderboard() {
   }
 }
 
-historyBtn.addEventListener("click", () => {
-  modalTitle.textContent = "Word History";
-  modalBody.innerHTML = playedWordsHistory.length === 0 ? `<p class="empty-history">No words played yet.</p>` :
-    playedWordsHistory.map(item => `
-      <div class="word-pill" onclick="fetchDefinition('${item.word}')">
-        <span><strong>${item.word}</strong> [${item.player}] (+${item.points} pts)</span>
-        <span>🔍 Info</span>
-      </div>
-    `).join("");
-  modalOverlay.classList.remove("hidden");
-});
+if (historyBtn) {
+  historyBtn.addEventListener("click", () => {
+    modalTitle.textContent = "Word History";
+    modalBody.innerHTML = playedWordsHistory.length === 0 ? `<p class="empty-history">No words played yet.</p>` :
+      playedWordsHistory.map(item => `
+        <div class="word-pill" onclick="fetchDefinition('${item.word}')">
+          <span><strong>${item.word}</strong> [${item.player}] (+${item.points} pts)</span>
+          <span>🔍 Info</span>
+        </div>
+      `).join("");
+    modalOverlay.classList.remove("hidden");
+  });
+}
 
 window.fetchDefinition = async function(word) {
   modalTitle.textContent = `Definition: ${word}`;
@@ -628,8 +655,12 @@ window.fetchDefinition = async function(word) {
   }
 };
 
-modalClose.addEventListener("click", () => modalOverlay.classList.add("hidden"));
-modalOverlay.addEventListener("click", (e) => { if (e.target === modalOverlay) modalOverlay.classList.add("hidden"); });
+if (modalClose) modalClose.addEventListener("click", () => modalOverlay.classList.add("hidden"));
+if (modalOverlay) {
+  modalOverlay.addEventListener("click", (e) => {
+    if (e.target === modalOverlay) modalOverlay.classList.add("hidden");
+  });
+}
 
 function resetPendingMoves() {
   pendingMoves.forEach(m => {
@@ -641,7 +672,7 @@ function resetPendingMoves() {
   rackEl.querySelectorAll(".rack-tile").forEach(t => (t.style.display = "flex"));
   pendingMoves = [];
   selectedTileData = null;
-  wordPreview.classList.add("hidden");
+  if (wordPreview) wordPreview.classList.add("hidden");
 }
 
 function showToast(msg, bg = "#ef4444") {
@@ -651,37 +682,6 @@ function showToast(msg, bg = "#ef4444") {
   setTimeout(() => toastEl.classList.add("hidden"), 2500);
 }
 
-function connectToMatchmaking(roomCode, playerName) {
-  currentRoomCode = roomCode;
-  const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
-  socket = new WebSocket(`${protocol}//${window.location.host}/ws/game/${roomCode}/`);
-
-  socket.onopen = () => {
-    showToast(`Connected to Room: ${roomCode}`, "#10b981");
-  };
-
-  socket.onmessage = (e) => {
-    const data = json.loads ? JSON.parse(e.data) : e.data;
-
-    if (data.type === "broadcast_move") {
-      if (data.sender !== playerName) {
-        // Render opponent's move onto your board live
-        data.tiles.forEach(t => {
-          const cell = boardEl.querySelector(`[data-row='${t.row}'][data-col='${t.col}']`);
-          cell.innerHTML = `${t.letter}<span class="point-subscript">${LETTER_POINTS[t.letter]}</span>`;
-          cell.className = "cell occupied";
-        });
-        botScore += data.points;
-        if (botScoreEl) botScoreEl.textContent = botScore;
-        showToast(`${data.sender} played for +${data.points} pts!`, "#38bdf8");
-        playAudio("success");
-      }
-    }
-  };
-
-  socket.onclose = () => {
-    showToast("Disconnected from room.", "#ef4444");
-  };
-}
+// Initial Boot
 refillRack();
 startTimer();

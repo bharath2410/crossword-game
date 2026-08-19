@@ -9,39 +9,56 @@
   <meta name="mobile-web-app-capable" content="yes">
   <link rel="icon" type="image/png" sizes="192x192" href="{% static 'game/icons/icon-192.png' %}">
   <link rel="manifest" href="{% static 'game/manifest.json' %}">
-  <link rel="stylesheet" href="{% static 'game/css/style.css' %}?v=10">
+  <link rel="stylesheet" href="{% static 'game/css/style.css' %}?v=13">
   <title>Crossword Duel</title>
 </head>
 <body>
+  <canvas id="confetti-canvas"></canvas>
 
   <div class="game-wrapper">
-    <!-- Streamlined Header -->
-    <header class="app-header">
-      <div class="score-card">
-        <span class="score-label">SCORE</span>
-        <span id="score" class="score-val">0</span>
-      </div>
+    <!-- Top Stat Row -->
+    <div class="stat-bar">
+      <span class="stat-pill" id="bot-indicator">👤 Solo Mode</span>
+      <span class="stat-pill">🎒 <span id="bag-count">100</span> left</span>
+      <span class="stat-pill">⏱️ <span id="timer-text">05:00</span></span>
+    </div>
 
-      <div class="center-meta">
-        <span id="timer-pill" class="meta-pill">⏱️ 04:30</span>
-        <span id="bag-pill" class="meta-pill">🎒 93 left</span>
+    <!-- Main Header -->
+    <header class="app-header">
+      <div class="scores-group">
+        <div class="score-card">
+          <span class="score-label">YOU</span>
+          <span id="score" class="score-val">0</span>
+        </div>
+        <div id="bot-score-badge" class="score-card" style="display: none;">
+          <span class="score-label" style="color: #f43f5e;">BOT</span>
+          <span id="bot-score" class="score-val" style="color: #f43f5e;">0</span>
+        </div>
       </div>
 
       <div class="top-buttons">
+        <button id="mode-btn" class="icon-circle-btn" title="Toggle AI Duel">🤖</button>
+        <button id="leaderboard-btn" class="icon-circle-btn" title="Leaderboard">🏆</button>
         <button id="history-btn" class="icon-circle-btn" title="Word History">📖</button>
+        <button id="new-game-btn" class="icon-circle-btn" title="Restart">🔄</button>
         <button id="submit-btn" class="btn play-btn">Play ➔</button>
       </div>
     </header>
 
-    <!-- Crossword Board -->
+    <!-- Word Preview -->
+    <div id="word-preview" class="word-preview hidden">
+      <span id="preview-word">---</span>
+      <span id="preview-score" class="preview-pts">+0 pts</span>
+    </div>
+
+    <!-- Board -->
     <main class="grid-container">
       <div id="board" class="crossword-grid"></div>
     </main>
 
-    <!-- Bottom Deck: Controls + Dynamic Rack -->
+    <!-- Bottom Deck -->
     <footer class="bottom-deck">
       <div class="control-strip">
-        <button id="toggle-dir-btn" class="action-btn">ACROSS →</button>
         <button id="shuffle-btn" class="action-btn">🔀 Shuffle</button>
         <button id="swap-btn" class="action-btn">🔄 Swap</button>
         <button id="clear-btn" class="action-btn danger-text">Clear</button>
@@ -54,7 +71,7 @@
   <!-- Toast Notification -->
   <div id="message-toast" class="toast hidden"></div>
 
-  <!-- Dictionary & History Modal -->
+  <!-- Modal -->
   <div id="modal-overlay" class="modal-overlay hidden">
     <div class="modal-card">
       <div class="modal-header">
@@ -65,6 +82,6 @@
     </div>
   </div>
 
-  <script src="{% static 'game/js/game.js' %}?v=10"></script>
+  <script src="{% static 'game/js/game.js' %}?v=13"></script>
 </body>
 </html>

@@ -1,7 +1,8 @@
 @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@600;700;800&display=swap');
 
 :root {
-  --cell-size: min(8.8vw, 4.3vh, 38px);
+  /* Clamp cell size strictly to 3.4vh so all 3 sections (header, board, deck) fit without overflow */
+  --cell-size: min(8.0vw, 3.4vh, 32px);
   --bg-dark: #090d16;
   --panel-bg: #131a2a;
   --board-bg: #1a2236;
@@ -23,26 +24,28 @@
 html, body {
   width: 100%;
   height: 100%;
+  height: 100svh;
   height: 100dvh;
   overflow: hidden;
-  background: radial-gradient(circle at 50% 0%, #1e293b, var(--bg-dark) 80%);
+  background: radial-gradient(circle at 50% 0%, #1e293b, var(--bg-dark) 85%);
   color: #fff;
   display: flex;
   justify-content: center;
   align-items: center;
 }
 
-/* Master Centered Wrapper */
+/* Master Fixed App Container */
 .game-wrapper {
   width: 100%;
-  max-width: 410px;
+  max-width: 400px;
   height: 100%;
+  height: 100svh;
   height: 100dvh;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
   align-items: center;
-  padding: 10px 12px calc(env(safe-area-inset-bottom, 8px) + 8px) 12px;
+  padding: env(safe-area-inset-top, 6px) 10px calc(env(safe-area-inset-bottom, 8px) + 6px) 10px;
 }
 
 /* 1. Header Toolbar */
@@ -50,12 +53,13 @@ html, body {
   width: 100%;
   background: var(--panel-bg);
   border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 14px;
-  padding: 8px 12px;
+  border-radius: 12px;
+  padding: 6px 10px;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+  flex-shrink: 0;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.4);
 }
 
 .score-card {
@@ -63,19 +67,19 @@ html, body {
   flex-direction: column;
   line-height: 1;
 }
-.score-label { font-size: 0.65rem; color: #94a3b8; font-weight: 800; letter-spacing: 0.5px; }
-.score-val { font-size: 1.2rem; color: #38bdf8; font-weight: 800; }
+.score-label { font-size: 0.6rem; color: #94a3b8; font-weight: 800; }
+.score-val { font-size: 1.15rem; color: #38bdf8; font-weight: 800; }
 
 .center-meta {
   display: flex;
-  gap: 6px;
+  gap: 5px;
 }
 .meta-pill {
-  background: rgba(255, 255, 255, 0.05);
+  background: rgba(255, 255, 255, 0.06);
   border: 1px solid rgba(255, 255, 255, 0.08);
-  padding: 4px 8px;
-  border-radius: 8px;
-  font-size: 0.75rem;
+  padding: 4px 7px;
+  border-radius: 6px;
+  font-size: 0.72rem;
   font-weight: 700;
   color: #cbd5e1;
 }
@@ -83,64 +87,64 @@ html, body {
 .top-buttons {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 5px;
 }
 
 .icon-circle-btn {
   background: #1e293b;
   border: 1px solid rgba(255, 255, 255, 0.1);
   color: #fff;
-  width: 34px;
-  height: 34px;
-  border-radius: 10px;
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 0.95rem;
+  font-size: 0.9rem;
 }
 
 .play-btn {
   background: var(--primary-accent);
   color: white;
   border: none;
-  border-radius: 10px;
-  padding: 7px 12px;
-  font-size: 0.82rem;
+  border-radius: 8px;
+  padding: 6px 12px;
+  font-size: 0.78rem;
   font-weight: 800;
   cursor: pointer;
-  box-shadow: 0 3px 0 #059669;
+  box-shadow: 0 2px 0 #059669;
 }
-.play-btn:active { transform: translateY(2px); }
+.play-btn:active { transform: translateY(1px); }
 
 /* 2. Board Grid */
 .grid-container {
   display: flex;
   justify-content: center;
   align-items: center;
-  margin: auto 0;
+  flex-shrink: 0;
 }
 
 .crossword-grid {
   display: grid;
   grid-template-columns: repeat(10, var(--cell-size));
   grid-template-rows: repeat(10, var(--cell-size));
-  gap: 2.5px;
+  gap: 2px;
   background: #0f172a;
-  padding: 4px;
-  border-radius: 12px;
+  padding: 3px;
+  border-radius: 10px;
   border: 1px solid rgba(255, 255, 255, 0.06);
-  box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.8), 0 8px 24px rgba(0, 0, 0, 0.5);
+  box-shadow: inset 0 2px 6px rgba(0, 0, 0, 0.8), 0 4px 16px rgba(0, 0, 0, 0.5);
 }
 
 .cell {
   background-color: var(--board-bg);
-  border-radius: 4px;
+  border-radius: 3px;
   display: flex;
   align-items: center;
   justify-content: center;
   position: relative;
-  font-size: calc(var(--cell-size) * 0.46);
+  font-size: calc(var(--cell-size) * 0.48);
   font-weight: 800;
   cursor: pointer;
 }
@@ -148,12 +152,12 @@ html, body {
 /* Multiplier Badges */
 .cell.dl { background: #0369a1; font-size: calc(var(--cell-size) * 0.3); color: #bae6fd; font-weight: 700; }
 .cell.tw { background: #b91c1c; font-size: calc(var(--cell-size) * 0.3); color: #fecaca; font-weight: 700; }
-.cell.center-star { background: #d97706; color: #fff; font-size: calc(var(--cell-size) * 0.45); }
+.cell.center-star { background: #d97706; color: #fff; font-size: calc(var(--cell-size) * 0.42); }
 
 .cell.selected {
   background: #3b82f6;
   color: #fff;
-  box-shadow: 0 0 8px rgba(59, 130, 246, 0.7);
+  box-shadow: 0 0 6px rgba(59, 130, 246, 0.7);
 }
 
 .cell.occupied {
@@ -165,40 +169,41 @@ html, body {
 
 .cell .point-subscript, .rack-tile .point-subscript {
   position: absolute;
-  bottom: 1.5px;
-  right: 2.5px;
+  bottom: 1px;
+  right: 2px;
   font-size: calc(var(--cell-size) * 0.22);
   font-weight: 800;
   line-height: 1;
   color: #78350f;
 }
 
-/* 3. Bottom Deck (Controls + Rack) */
+/* 3. Bottom Deck */
 .bottom-deck {
   width: 100%;
   background: var(--panel-bg);
   border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 16px;
-  padding: 8px 10px;
+  border-radius: 14px;
+  padding: 6px 8px;
   display: flex;
   flex-direction: column;
-  gap: 8px;
-  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.5);
+  gap: 6px;
+  flex-shrink: 0;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.5);
 }
 
 .control-strip {
   display: grid;
-  grid-template-columns: 1.2fr 1fr 1fr 0.9fr;
-  gap: 5px;
+  grid-template-columns: 1.1fr 1fr 1fr 0.9fr;
+  gap: 4px;
 }
 
 .action-btn {
   background: #1e293b;
   border: 1px solid rgba(255, 255, 255, 0.08);
   color: #e2e8f0;
-  padding: 6px 2px;
-  border-radius: 8px;
-  font-size: 0.74rem;
+  padding: 5px 2px;
+  border-radius: 6px;
+  font-size: 0.72rem;
   font-weight: 700;
   cursor: pointer;
   text-align: center;
@@ -209,42 +214,42 @@ html, body {
 /* Rack */
 .letter-rack {
   display: flex;
-  gap: 5px;
+  gap: 4px;
   justify-content: center;
 }
 
 .rack-tile {
   width: var(--cell-size);
-  height: calc(var(--cell-size) * 1.2);
+  height: calc(var(--cell-size) * 1.18);
   background: var(--tile-bg);
   color: var(--text-dark);
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: calc(var(--cell-size) * 0.54);
+  font-size: calc(var(--cell-size) * 0.52);
   font-weight: 800;
-  border-radius: 6px;
+  border-radius: 5px;
   border: 1px solid var(--tile-border);
-  box-shadow: 0 3px 0 #a16207, 0 3px 6px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 2px 0 #a16207, 0 3px 6px rgba(0, 0, 0, 0.3);
   cursor: pointer;
   position: relative;
   transition: transform 0.1s ease;
 }
 
 .rack-tile.selected-tile {
-  outline: 2.5px solid #38bdf8;
-  transform: translateY(-4px);
+  outline: 2px solid #38bdf8;
+  transform: translateY(-3px);
 }
 
 /* Modals & Toasts */
 .toast {
   position: fixed;
-  top: 14px;
+  top: 12px;
   background: #ef4444;
   color: white;
-  padding: 7px 16px;
+  padding: 6px 14px;
   border-radius: 20px;
-  font-size: 0.8rem;
+  font-size: 0.78rem;
   font-weight: 700;
   z-index: 150;
   box-shadow: 0 4px 12px rgba(0,0,0,0.5);
@@ -269,22 +274,22 @@ html, body {
   border-radius: 14px;
   width: 100%;
   max-width: 340px;
-  padding: 16px;
+  padding: 14px;
 }
 .modal-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 12px;
+  margin-bottom: 10px;
 }
-.close-btn { background: none; border: none; font-size: 1.4rem; color: #94a3b8; cursor: pointer; }
+.close-btn { background: none; border: none; font-size: 1.3rem; color: #94a3b8; cursor: pointer; }
 .word-pill {
   background: #1e293b;
-  padding: 8px 12px;
-  border-radius: 8px;
-  margin-bottom: 6px;
+  padding: 7px 10px;
+  border-radius: 6px;
+  margin-bottom: 5px;
   display: flex;
   justify-content: space-between;
-  font-size: 0.85rem;
+  font-size: 0.82rem;
   cursor: pointer;
 }
