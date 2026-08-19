@@ -5,29 +5,31 @@ const boardEl = document.getElementById("board");
 const rackEl = document.getElementById("rack");
 const dirToggleBtn = document.getElementById("toggle-dir-btn");
 const shuffleBtn = document.getElementById("shuffle-btn");
+const swapBtn = document.getElementById("swap-btn");
 const submitBtn = document.getElementById("submit-btn");
 const clearBtn = document.getElementById("clear-btn");
 const toastEl = document.getElementById("message-toast");
 const scoreEl = document.getElementById("score");
 
 let direction = "across";
-let selectedTileData = null; // { id, letter }
+let selectedTileData = null;
 let currentScore = 0;
-let pendingMoves = [];       // [{ row, col, letter, rackId }]
-let playerRack = [];         // Array of tile objects: [{ id: 1, letter: 'A' }, ...]
+let pendingMoves = [];
+let playerRack = [];
 let tileCounter = 0;
 
-// Standard English Letter Distribution Pool (Weighted)
-const LETTER_POOL = [
-  ...'AAAAAAAAA', ...'BB', ...'CC', ...'DDDD', ...'EEEEEEEEEEEE',
-  ...'FF', ...'GGG', ...'HH', ...'IIIIIIIII', ...'J', ...'K',
-  ...'LLLL', ...'MM', ...'NNNNNN', ...'OOOOOOOO', ...'PP', ...'Q',
-  ...'RRRRRR', ...'SSSS', ...'TTTTTT', ...'UUUU', ...'VV', ...'WW',
-  ...'X', ...'YY', ...'Z'
+const VOWELS = ['A', 'E', 'I', 'O', 'U'];
+const CONSONANTS = [
+  'B', 'C', 'D', 'F', 'G', 'H', 'J', 'K', 'L', 'M',
+  'N', 'P', 'Q', 'R', 'S', 'T', 'V', 'W', 'X', 'Y', 'Z'
 ];
 
-function getRandomLetter() {
-  return LETTER_POOL[Math.floor(Math.random() * LETTER_POOL.length)];
+function getRandomVowel() {
+  return VOWELS[Math.floor(Math.random() * VOWELS.length)];
+}
+
+function getRandomConsonant() {
+  return CONSONANTS[Math.floor(Math.random() * CONSONANTS.length)];
 }
 
 function getCookie(name) {
@@ -57,13 +59,20 @@ for (let r = 0; r < GRID_SIZE; r++) {
   }
 }
 
-// 2. Initialize Dynamic Rack
+// 2. Guaranteed Balanced Refill (Ensures 2-3 vowels)
 function refillRack() {
+  const currentVowels = playerRack.filter(t => VOWELS.includes(t.letter)).length;
+
   while (playerRack.length < RACK_SIZE) {
     tileCounter++;
+    // If rack has fewer than 2 vowels, force draw a vowel
+    const letter = (currentVowels < 2 && Math.random() < 0.7)
+      ? getRandomVowel()
+      : (Math.random() < 0.4 ? getRandomVowel() : getRandomConsonant());
+
     playerRack.push({
       id: `tile-${tileCounter}`,
-      letter: getRandomLetter()
+      letter: letter
     });
   }
   renderRack();
@@ -81,7 +90,7 @@ function renderRack() {
     tileDiv.addEventListener("pointerdown", () => {
       rackEl.querySelectorAll(".rack-tile").forEach(t => t.classList.remove("selected-tile"));
       if (selectedTileData && selectedTileData.id === tile.id) {
-        selectedTileData = null; // Toggle off if clicked again
+        selectedTileData = null;
       } else {
         selectedTileData = tile;
         tileDiv.classList.add("selected-tile");
@@ -92,7 +101,7 @@ function renderRack() {
   });
 }
 
-// 3. Handle Tile Placement
+// 3. Tile Placement
 function handleCellClick(cell, r, c) {
   if (!selectedTileData || cell.classList.contains("occupied") || cell.classList.contains("selected")) return;
 
@@ -106,14 +115,13 @@ function handleCellClick(cell, r, c) {
     rackId: selectedTileData.id
   });
 
-  // Hide placed tile from rack
   const rackTileEl = rackEl.querySelector(`[data-id='${selectedTileData.id}']`);
   if (rackTileEl) rackTileEl.style.display = "none";
 
   selectedTileData = null;
 }
 
-// 4. Direction Toggle & Controls
+// 4. Controls
 dirToggleBtn.addEventListener("click", () => {
   direction = direction === "across" ? "down" : "across";
   dirToggleBtn.textContent = direction === "across" ? "Mode: ACROSS →" : "Mode: DOWN ↓";
@@ -123,6 +131,13 @@ shuffleBtn.addEventListener("click", () => {
   resetPendingMoves();
   playerRack.sort(() => Math.random() - 0.5);
   renderRack();
+});
+
+swapBtn.addEventListener("click", () => {
+  resetPendingMoves();
+  playerRack = [];
+  refillRack();
+  showToast("Tiles swapped!", "#3b82f6");
 });
 
 clearBtn.addEventListener("click", resetPendingMoves);
@@ -158,20 +173,15 @@ submitBtn.addEventListener("click", async () => {
       currentScore += data.points;
       scoreEl.textContent = currentScore;
 
-      // Lock placed cells on the board
       pendingMoves.forEach(m => {
         const cell = boardEl.querySelector(`[data-row='${m.row}'][data-col='${m.col}']`);
         cell.classList.remove("selected");
         cell.classList.add("occupied");
-
-        // Remove successfully placed tile from player's hand
         playerRack = playerRack.filter(t => t.id !== m.rackId);
       });
 
       pendingMoves = [];
       showToast(data.message, "#22c55e");
-
-      // Refill used letters with new random ones
       refillRack();
     } else {
       showToast(data.message, "#ef4444");
@@ -201,5 +211,9 @@ function showToast(msg, bg = "#ef4444") {
   setTimeout(() => toastEl.classList.add("hidden"), 2500);
 }
 
-// Initial draw of 7 letters on game start
+// Add CSS styling for swap button dynamically or via style.css
+const style = document.createElement("style");
+style.innerHTML = `.btn.warning { background: #f59e0b; color: white; }`;
+document.head.appendChild(style);
+
 refillRack();
