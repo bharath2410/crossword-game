@@ -267,6 +267,8 @@ modeBtn.addEventListener("click", () => {
 });
 
 // 6. Submit Move & Floating Score FX
+// Remove `dirToggleBtn` references if any exist.
+
 submitBtn.addEventListener("click", async () => {
   if (isBotThinking || isGameOver) return;
   if (pendingMoves.length === 0) {
@@ -275,17 +277,51 @@ submitBtn.addEventListener("click", async () => {
     return;
   }
 
-  pendingMoves.sort((a, b) => (direction === "across" ? a.col - b.col : a.row - b.row));
+  // --- AUTO-DETECT DIRECTION ---
+  let detectedDirection = "across";
+
+  if (pendingMoves.length > 1) {
+    const rows = new Set(pendingMoves.map(m => m.row));
+    const cols = new Set(pendingMoves.map(m => m.col));
+
+    if (rows.size === 1) {
+      detectedDirection = "across";
+    } else if (cols.size === 1) {
+      detectedDirection = "down";
+    } else {
+      playAudio('error');
+      showToast("Letters must be placed in a single straight line!");
+      return;
+    }
+  } else {
+    // If placing only 1 tile, check adjacent neighbors to see which axis forms a word
+    const single = pendingMoves[0];
+    const hasHorizNeighbor = (single.col > 0 && getCellLetter(single.row, single.col - 1)) ||
+                             (single.col < GRID_SIZE - 1 && getCellLetter(single.row, single.col + 1));
+    const hasVertNeighbor  = (single.row > 0 && getCellLetter(single.row - 1, single.col)) ||
+                             (single.row < GRID_SIZE - 1 && getCellLetter(single.row + 1, single.col));
+
+    if (hasVertNeighbor && !hasHorizNeighbor) {
+      detectedDirection = "down";
+    } else {
+      detectedDirection = "across";
+    }
+  }
+
+  // Sort along the detected direction axis
+  pendingMoves.sort((a, b) => (detectedDirection === "across" ? a.col - b.col : a.row - b.row));
 
   let startRow = pendingMoves[0].row;
   let startCol = pendingMoves[0].col;
 
-  if (direction === "across") {
+  // Step backward to find the true beginning of the word
+  if (detectedDirection === "across") {
     while (startCol > 0 && getCellLetter(startRow, startCol - 1)) startCol--;
   } else {
     while (startRow > 0 && getCellLetter(startRow - 1, startCol)) startRow--;
   }
 
+  // Build the full unbroken word along the line
   let fullWord = "";
   let currRow = startRow;
   let currCol = startCol;
@@ -297,7 +333,7 @@ submitBtn.addEventListener("click", async () => {
     const cell = boardEl.querySelector(`[data-row='${currRow}'][data-col='${currCol}']`);
     if (cell.classList.contains("occupied")) connectedToExisting = true;
     fullWord += letter;
-    if (direction === "across") currCol++;
+    if (detectedDirection === "across") currCol++;
     else currRow++;
   }
 
@@ -315,7 +351,7 @@ submitBtn.addEventListener("click", async () => {
         word: fullWord,
         row: startRow,
         col: startCol,
-        direction: direction,
+        direction: detectedDirection,
         is_first_turn: isFirstTurn,
         connected_to_existing: connectedToExisting
       })
@@ -331,7 +367,6 @@ submitBtn.addEventListener("click", async () => {
       if (fullWord.length > bestWordPlayed.length) bestWordPlayed = fullWord;
       playedWordsHistory.push({ word: fullWord, points: data.points, player: "You" });
 
-      // Trigger Floating Score FX & Confetti
       spawnScoreFloater(`+${data.points}`, startRow, startCol);
       if (data.points >= 15 || fullWord.length >= 5) triggerConfetti();
 
@@ -346,7 +381,6 @@ submitBtn.addEventListener("click", async () => {
       showToast(data.message, "#10b981");
       refillRack();
 
-      // Trigger AI turn if enabled
       if (isAiMode) triggerBotTurn();
     } else {
       playAudio('error');
