@@ -18,19 +18,14 @@ let pendingMoves = [];
 let playerRack = [];
 let tileCounter = 0;
 
+const LETTER_POINTS = {
+  'A': 1, 'B': 3, 'C': 3, 'D': 2, 'E': 1, 'F': 4, 'G': 2, 'H': 4, 'I': 1,
+  'J': 8, 'K': 5, 'L': 1, 'M': 3, 'N': 1, 'O': 1, 'P': 3, 'Q': 10, 'R': 1,
+  'S': 1, 'T': 1, 'U': 1, 'V': 4, 'W': 4, 'X': 8, 'Y': 4, 'Z': 10
+};
+
 const VOWELS = ['A', 'E', 'I', 'O', 'U'];
-const CONSONANTS = [
-  'B', 'C', 'D', 'F', 'G', 'H', 'J', 'K', 'L', 'M',
-  'N', 'P', 'Q', 'R', 'S', 'T', 'V', 'W', 'X', 'Y', 'Z'
-];
-
-function getRandomVowel() {
-  return VOWELS[Math.floor(Math.random() * VOWELS.length)];
-}
-
-function getRandomConsonant() {
-  return CONSONANTS[Math.floor(Math.random() * CONSONANTS.length)];
-}
+const CONSONANTS = ['B', 'C', 'D', 'F', 'G', 'H', 'J', 'K', 'L', 'M', 'N', 'P', 'R', 'S', 'T', 'W', 'Y'];
 
 function getCookie(name) {
   let cookieValue = null;
@@ -47,33 +42,52 @@ function getCookie(name) {
   return cookieValue;
 }
 
-// 1. Initialize Board
+// 1. Initialize Board with Multiplier Labels
+const specialTiles = {
+  "0,0": { cls: "tw", text: "3W" }, "0,9": { cls: "tw", text: "3W" },
+  "9,0": { cls: "tw", text: "3W" }, "9,9": { cls: "tw", text: "3W" },
+  "2,2": { cls: "dl", text: "2L" }, "2,7": { cls: "dl", text: "2L" },
+  "7,2": { cls: "dl", text: "2L" }, "7,7": { cls: "dl", text: "2L" },
+  "4,4": { cls: "center-star", text: "★" }, "4,5": { cls: "center-star", text: "★" }
+};
+
 for (let r = 0; r < GRID_SIZE; r++) {
   for (let c = 0; c < GRID_SIZE; c++) {
     const cell = document.createElement("div");
     cell.className = "cell";
     cell.dataset.row = r;
     cell.dataset.col = c;
+
+    const special = specialTiles[`${r},${c}`];
+    if (special) {
+      cell.classList.add(special.cls);
+      cell.textContent = special.text;
+    }
+
     cell.addEventListener("pointerdown", () => handleCellClick(cell, r, c));
     boardEl.appendChild(cell);
   }
 }
 
-// 2. Guaranteed Balanced Refill (Ensures 2-3 vowels)
+// 2. Fixed Balanced Letter Generation (Ensures exactly 2-3 vowels)
 function refillRack() {
-  const currentVowels = playerRack.filter(t => VOWELS.includes(t.letter)).length;
-
   while (playerRack.length < RACK_SIZE) {
     tileCounter++;
-    // If rack has fewer than 2 vowels, force draw a vowel
-    const letter = (currentVowels < 2 && Math.random() < 0.7)
-      ? getRandomVowel()
-      : (Math.random() < 0.4 ? getRandomVowel() : getRandomConsonant());
+    const currentVowels = playerRack.filter(t => VOWELS.includes(t.letter)).length;
 
-    playerRack.push({
-      id: `tile-${tileCounter}`,
-      letter: letter
-    });
+    // Maintain 2 to 3 vowels in a 7-tile hand
+    let letter;
+    if (currentVowels < 2) {
+      letter = VOWELS[Math.floor(Math.random() * VOWELS.length)];
+    } else if (currentVowels >= 3) {
+      letter = CONSONANTS[Math.floor(Math.random() * CONSONANTS.length)];
+    } else {
+      letter = Math.random() < 0.35
+        ? VOWELS[Math.floor(Math.random() * VOWELS.length)]
+        : CONSONANTS[Math.floor(Math.random() * CONSONANTS.length)];
+    }
+
+    playerRack.push({ id: `tile-${tileCounter}`, letter: letter });
   }
   renderRack();
 }
@@ -85,7 +99,9 @@ function renderRack() {
     tileDiv.className = "rack-tile";
     tileDiv.dataset.id = tile.id;
     tileDiv.dataset.letter = tile.letter;
-    tileDiv.textContent = tile.letter;
+
+    // Add letter and score subscript
+    tileDiv.innerHTML = `${tile.letter}<span class="point-subscript">${LETTER_POINTS[tile.letter] || 1}</span>`;
 
     tileDiv.addEventListener("pointerdown", () => {
       rackEl.querySelectorAll(".rack-tile").forEach(t => t.classList.remove("selected-tile"));
@@ -124,7 +140,7 @@ function handleCellClick(cell, r, c) {
 // 4. Controls
 dirToggleBtn.addEventListener("click", () => {
   direction = direction === "across" ? "down" : "across";
-  dirToggleBtn.textContent = direction === "across" ? "Mode: ACROSS →" : "Mode: DOWN ↓";
+  dirToggleBtn.textContent = direction === "across" ? "ACROSS ➔" : "DOWN ↓";
 });
 
 shuffleBtn.addEventListener("click", () => {
@@ -137,57 +153,42 @@ swapBtn.addEventListener("click", () => {
   resetPendingMoves();
   playerRack = [];
   refillRack();
-  showToast("Tiles swapped!", "#3b82f6");
+  showToast("Tiles swapped!", "#f59e0b");
 });
 
 clearBtn.addEventListener("click", resetPendingMoves);
 
-// 5. Submit Word (with Board Traversal for Intersecting / Connected Tiles)
+// 5. Submit Word
 submitBtn.addEventListener("click", async () => {
   if (pendingMoves.length === 0) {
     showToast("Place letters on the board first!");
     return;
   }
 
-  // 1. Sort pending moves along the active axis
   pendingMoves.sort((a, b) => (direction === "across" ? a.col - b.col : a.row - b.row));
 
-  // 2. Find the full continuous word bounds on the board
   let startRow = pendingMoves[0].row;
   let startCol = pendingMoves[0].col;
 
-  // Step backward to find the true beginning of the word
   if (direction === "across") {
-    while (startCol > 0 && getCellLetter(startRow, startCol - 1)) {
-      startCol--;
-    }
+    while (startCol > 0 && getCellLetter(startRow, startCol - 1)) startCol--;
   } else {
-    while (startRow > 0 && getCellLetter(startRow - 1, startCol)) {
-      startRow--;
-    }
+    while (startRow > 0 && getCellLetter(startRow - 1, startCol)) startRow--;
   }
 
-  // Step forward from the true beginning to build the full word
   let fullWord = "";
   let currRow = startRow;
   let currCol = startCol;
 
   while (currRow < GRID_SIZE && currCol < GRID_SIZE) {
     const letter = getCellLetter(currRow, currCol);
-    if (!letter) break; // End of contiguous word
-
+    if (!letter) break;
     fullWord += letter;
-
-    if (direction === "across") {
-      currCol++;
-    } else {
-      currRow++;
-    }
+    if (direction === "across") currCol++;
+    else currRow++;
   }
 
-  // 3. Ensure all pending tiles are part of this single continuous line
-  const wordLength = fullWord.length;
-  if (wordLength < 2) {
+  if (fullWord.length < 2) {
     showToast("Words must be at least 2 letters long!");
     return;
   }
@@ -213,16 +214,14 @@ submitBtn.addEventListener("click", async () => {
       currentScore += data.points;
       scoreEl.textContent = currentScore;
 
-      // Lock placed cells
       pendingMoves.forEach(m => {
         const cell = boardEl.querySelector(`[data-row='${m.row}'][data-col='${m.col}']`);
-        cell.classList.remove("selected");
-        cell.classList.add("occupied");
+        cell.className = "cell occupied";
         playerRack = playerRack.filter(t => t.id !== m.rackId);
       });
 
       pendingMoves = [];
-      showToast(data.message, "#22c55e");
+      showToast(data.message, "#10b981");
       refillRack();
     } else {
       showToast(data.message, "#ef4444");
@@ -234,17 +233,21 @@ submitBtn.addEventListener("click", async () => {
   }
 });
 
-// Helper function to read the letter in any cell (whether pending or already occupied)
 function getCellLetter(r, c) {
   const cell = boardEl.querySelector(`[data-row='${r}'][data-col='${c}']`);
-  return cell && cell.textContent ? cell.textContent.trim() : null;
+  if (!cell) return null;
+  if (cell.classList.contains("selected") || cell.classList.contains("occupied")) {
+    return cell.textContent.trim().charAt(0);
+  }
+  return null;
 }
 
 function resetPendingMoves() {
   pendingMoves.forEach(m => {
     const cell = boardEl.querySelector(`[data-row='${m.row}'][data-col='${m.col}']`);
-    cell.textContent = "";
-    cell.classList.remove("selected");
+    const special = specialTiles[`${m.row},${m.col}`];
+    cell.className = "cell" + (special ? ` ${special.cls}` : "");
+    cell.textContent = special ? special.text : "";
   });
   rackEl.querySelectorAll(".rack-tile").forEach(t => (t.style.display = "flex"));
   pendingMoves = [];
@@ -257,10 +260,5 @@ function showToast(msg, bg = "#ef4444") {
   toastEl.classList.remove("hidden");
   setTimeout(() => toastEl.classList.add("hidden"), 2500);
 }
-
-// Add CSS styling for swap button dynamically or via style.css
-const style = document.createElement("style");
-style.innerHTML = `.btn.warning { background: #f59e0b; color: white; }`;
-document.head.appendChild(style);
 
 refillRack();
