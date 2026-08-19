@@ -46,6 +46,8 @@ let cursorRow = 4, cursorCol = 4;
 let timeLeft = MATCH_DURATION;
 let timerInterval = null;
 let isGameOver = false;
+let socket = null;
+let currentRoomCode = null;
 
 // 100 Tiles including 2 Blank Wildcards (*)
 const FULL_BAG = [
@@ -649,5 +651,37 @@ function showToast(msg, bg = "#ef4444") {
   setTimeout(() => toastEl.classList.add("hidden"), 2500);
 }
 
+function connectToMatchmaking(roomCode, playerName) {
+  currentRoomCode = roomCode;
+  const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
+  socket = new WebSocket(`${protocol}//${window.location.host}/ws/game/${roomCode}/`);
+
+  socket.onopen = () => {
+    showToast(`Connected to Room: ${roomCode}`, "#10b981");
+  };
+
+  socket.onmessage = (e) => {
+    const data = json.loads ? JSON.parse(e.data) : e.data;
+
+    if (data.type === "broadcast_move") {
+      if (data.sender !== playerName) {
+        // Render opponent's move onto your board live
+        data.tiles.forEach(t => {
+          const cell = boardEl.querySelector(`[data-row='${t.row}'][data-col='${t.col}']`);
+          cell.innerHTML = `${t.letter}<span class="point-subscript">${LETTER_POINTS[t.letter]}</span>`;
+          cell.className = "cell occupied";
+        });
+        botScore += data.points;
+        if (botScoreEl) botScoreEl.textContent = botScore;
+        showToast(`${data.sender} played for +${data.points} pts!`, "#38bdf8");
+        playAudio("success");
+      }
+    }
+  };
+
+  socket.onclose = () => {
+    showToast("Disconnected from room.", "#ef4444");
+  };
+}
 refillRack();
 startTimer();

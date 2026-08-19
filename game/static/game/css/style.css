@@ -332,3 +332,34 @@ html, body {
   cursor: pointer;
 }
 .wildcard-btn:active { background: #38bdf8; }
+
+/* 15x15 Responsive Pan/Zoom Viewport */
+.board-viewport {
+  width: 100%;
+  max-width: 420px;
+  height: 52vh;
+  overflow: scroll;
+  -webkit-overflow-scrolling: touch;
+  border-radius: 12px;
+  background: #0f172a;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.crossword-grid-15 {
+  display: grid;
+  grid-template-columns: repeat(15, 32px);
+  grid-template-rows: repeat(15, 32px);
+  gap: 2px;
+  padding: 8px;
+  transform-origin: top left;
+  transition: transform 0.2s ease;
+}
+
+.cell.tw { background: #dc2626; color: #fecaca; font-size: 0.65rem; }
+.cell.dw { background: #db2777; color: #fbcfe8; font-size: 0.65rem; }
+.cell.tl { background: #2563eb; color: #bfdbfe; font-size: 0.65rem; }
+.cell.dl { background: #0284c7; color: #bae6fd; font-size: 0.65rem; }
+.cell.center-star { background: #d97706; color: #fff; font-size: 0.95rem; }
