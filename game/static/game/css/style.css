@@ -1,0 +1,124 @@
+:root {
+  --cell-size: min(8.5vw, 40px);
+  --bg-dark: #0f172a;
+  --tile-bg: #f8fafc;
+  --cell-bg: #1e293b;
+  --border-color: #334155;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  touch-action: manipulation;
+  user-select: none;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  background-color: var(--bg-dark);
+  color: #fff;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-height: 100vh;
+  padding: 12px;
+}
+
+.game-header {
+  width: 100%;
+  max-width: 420px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.score-display {
+  font-size: 1.2rem;
+  font-weight: bold;
+}
+
+.crossword-grid {
+  display: grid;
+  grid-template-columns: repeat(10, var(--cell-size));
+  grid-template-rows: repeat(10, var(--cell-size));
+  gap: 3px;
+  background-color: var(--border-color);
+  padding: 4px;
+  border-radius: 8px;
+}
+
+.cell {
+  background-color: var(--cell-bg);
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.1rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.cell.selected { background-color: #3b82f6; }
+.cell.occupied { background-color: #f1f5f9; color: #0f172a; }
+
+.controls {
+  display: flex;
+  gap: 8px;
+  margin-top: 10px;
+  width: 100%;
+  max-width: 420px;
+}
+
+.letter-rack {
+  display: flex;
+  gap: 6px;
+  margin-top: 16px;
+  justify-content: center;
+  width: 100%;
+  max-width: 420px;
+}
+
+.rack-tile {
+  width: var(--cell-size);
+  height: var(--cell-size);
+  background-color: var(--tile-bg);
+  color: #0f172a;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.1rem;
+  font-weight: 800;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.rack-tile.selected-tile {
+  outline: 3px solid #22c55e;
+  transform: translateY(-3px);
+}
+
+.btn {
+  padding: 8px 14px;
+  border-radius: 6px;
+  border: none;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.btn.primary { background: #22c55e; color: white; }
+.btn.secondary { background: #334155; color: white; flex: 1; }
+.btn.danger { background: #ef4444; color: white; }
+
+.toast {
+  position: fixed;
+  bottom: 24px;
+  background: #ef4444;
+  color: white;
+  padding: 8px 16px;
+  border-radius: 20px;
+  font-size: 0.9rem;
+  transition: opacity 0.3s ease;
+}
+.toast.hidden { opacity: 0; pointer-events: none; }

@@ -1,0 +1,40 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>Mobile Crossword</title>
+  <link rel="stylesheet" href="{% static 'game/css/style.css' %}">
+</head>
+<body>
+
+  <header class="game-header">
+    <div class="score-display">Score: <span id="score">0</span></div>
+    <button id="submit-btn" class="btn primary">Play Word</button>
+  </header>
+
+  <main class="game-container">
+    <div id="board" class="crossword-grid"></div>
+
+    <div class="controls">
+      <button id="toggle-dir-btn" class="btn secondary">Mode: ACROSS →</button>
+      <button id="clear-btn" class="btn danger">Clear</button>
+    </div>
+
+    <div id="rack" class="letter-rack">
+      <div class="rack-tile" data-letter="P">P</div>
+      <div class="rack-tile" data-letter="Y">Y</div>
+      <div class="rack-tile" data-letter="T">T</div>
+      <div class="rack-tile" data-letter="H">H</div>
+      <div class="rack-tile" data-letter="O">O</div>
+      <div class="rack-tile" data-letter="N">N</div>
+      <div class="rack-tile" data-letter="D">D</div>
+    </div>
+  </main>
+
+  <div id="message-toast" class="toast hidden"></div>
+
+  <script src="{% static 'game/js/game.js' %}"></script>
+</body>
+</html>
