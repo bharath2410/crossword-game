@@ -31,7 +31,8 @@ def validate_move(request):
         elif direction == "down" and (row + len(word) > grid_limit):
             return JsonResponse({"valid": False, "message": "Word exceeds board boundary."})
 
-        points = calculate_word_score(word)
+        # In game/views.py:
+        points = calculate_word_score(word, start_row=row, start_col=col, direction=direction)
         return JsonResponse({"valid": True, "word": word, "points": points, "message": f"+{points} points!"})
 
     except Exception as e:
