@@ -1,8 +1,7 @@
 @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@600;700;800&display=swap');
 
 :root {
-  /* Dynamically clamp cell size to fit both short screens (vh) and narrow screens (vw) */
-  --cell-size: min(8.2vw, 4.8vh, 36px);
+  --cell-size: min(8.0vw, 4.4vh, 35px);
   --bg-main: #0b0f19;
   --panel-bg: #151d30;
   --board-bg: #1e293b;
@@ -31,18 +30,40 @@ html, body {
   align-items: center;
 }
 
-/* Full Viewport App Wrapper with Safe Area Support */
+#confetti-canvas {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 300;
+}
+
 .game-wrapper {
   width: 100%;
   max-width: 420px;
   height: 100%;
   height: 100dvh;
-  max-height: 100dvh;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
-  padding: env(safe-area-inset-top, 8px) 12px calc(env(safe-area-inset-bottom, 12px) + 8px) 12px;
+  padding: env(safe-area-inset-top, 6px) 10px calc(env(safe-area-inset-bottom, 10px) + 6px) 10px;
 }
+
+/* Stat Bar */
+.stat-bar {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.76rem;
+  font-weight: 700;
+  color: #94a3b8;
+  margin-bottom: 2px;
+}
+.stat-pill {
+  background: rgba(255, 255, 255, 0.05);
+  padding: 3px 8px;
+  border-radius: 6px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+.bot-pill { color: #38bdf8; }
 
 /* Header */
 .game-header {
@@ -51,21 +72,19 @@ html, body {
   align-items: center;
   margin-bottom: 2px;
 }
-
+.scores-group { display: flex; gap: 6px; }
 .score-badge {
   background: rgba(255, 255, 255, 0.06);
   border: 1px solid rgba(255, 255, 255, 0.12);
-  padding: 5px 12px;
-  border-radius: 10px;
-  font-size: 0.9rem;
+  padding: 4px 8px;
+  border-radius: 8px;
+  font-size: 0.85rem;
   font-weight: 700;
 }
 .score-badge span { color: #38bdf8; }
+.score-badge.bot-score span { color: #f43f5e; }
 
-.header-actions {
-  display: flex;
-  gap: 8px;
-}
+.header-actions { display: flex; gap: 5px; }
 
 /* Board Grid */
 .grid-container {
@@ -73,6 +92,7 @@ html, body {
   justify-content: center;
   align-items: center;
   margin: auto 0;
+  position: relative;
 }
 
 .crossword-grid {
@@ -98,12 +118,10 @@ html, body {
   cursor: pointer;
 }
 
-/* Multiplier Cells */
-.cell.dl { background: #0369a1; font-size: calc(var(--cell-size) * 0.32); color: #bae6fd; font-weight: 700; }
-.cell.tw { background: #b91c1c; font-size: calc(var(--cell-size) * 0.32); color: #fecaca; font-weight: 700; }
-.cell.center-star { background: #d97706; color: #fff; font-size: calc(var(--cell-size) * 0.45); }
+.cell.dl { background: #0369a1; font-size: calc(var(--cell-size) * 0.3); color: #bae6fd; font-weight: 700; }
+.cell.tw { background: #b91c1c; font-size: calc(var(--cell-size) * 0.3); color: #fecaca; font-weight: 700; }
+.cell.center-star { background: #d97706; color: #fff; font-size: calc(var(--cell-size) * 0.42); }
 
-/* Active & Placed Tile Styles */
 .cell.selected {
   background: #3b82f6;
   color: #fff;
@@ -134,35 +152,67 @@ html, body {
   color: #78350f;
 }
 
+/* Floating Score Popup */
+@keyframes floatUp {
+  0% { opacity: 1; transform: translateY(0) scale(1); }
+  100% { opacity: 0; transform: translateY(-35px) scale(1.2); }
+}
+.score-floater {
+  position: absolute;
+  font-size: 1.1rem;
+  font-weight: 900;
+  color: #10b981;
+  text-shadow: 0 2px 6px rgba(0,0,0,0.8);
+  pointer-events: none;
+  animation: floatUp 0.9s ease-out forwards;
+  z-index: 50;
+}
+
+/* Live Word Preview Pill */
+.word-preview {
+  background: #1e293b;
+  border: 1px solid #38bdf8;
+  padding: 3px 12px;
+  border-radius: 14px;
+  font-size: 0.78rem;
+  font-weight: 800;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin: 2px auto;
+  width: fit-content;
+  min-width: 140px;
+  gap: 10px;
+}
+.word-preview.hidden { display: none; }
+.preview-pts { color: #10b981; }
+
 /* Controls */
 .controls {
   display: grid;
   grid-template-columns: 1.2fr 1fr 1fr 0.8fr;
   gap: 5px;
   width: 100%;
-  margin-top: 4px;
 }
-
 .btn {
   padding: 8px 4px;
   border-radius: 8px;
   border: none;
   font-weight: 700;
-  font-size: 0.78rem;
+  font-size: 0.75rem;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
 }
-
 .btn:active { transform: translateY(2px); }
 .btn.primary { background: #10b981; color: white; box-shadow: 0 3px 0 #059669; }
 .btn.secondary { background: #334155; color: #f8fafc; box-shadow: 0 3px 0 #1e293b; }
 .btn.warning { background: #f59e0b; color: white; box-shadow: 0 3px 0 #d97706; }
 .btn.danger { background: #ef4444; color: white; box-shadow: 0 3px 0 #b91c1c; }
-.btn.icon-btn { background: #334155; padding: 0 10px; font-size: 1rem; }
+.btn.icon-btn { background: #334155; padding: 0 8px; font-size: 0.9rem; }
 
-/* Letter Rack */
+/* Rack */
 .letter-rack {
   display: flex;
   gap: 5px;
@@ -171,9 +221,7 @@ html, body {
   padding: 6px;
   border-radius: 12px;
   border: 1px solid rgba(255,255,255,0.06);
-  margin-top: 4px;
 }
-
 .rack-tile {
   width: var(--cell-size);
   height: calc(var(--cell-size) * 1.18);
@@ -190,7 +238,6 @@ html, body {
   cursor: pointer;
   position: relative;
 }
-
 .rack-tile.selected-tile {
   outline: 2.5px solid #38bdf8;
   transform: translateY(-3px);
@@ -207,14 +254,14 @@ html, body {
   font-size: 0.82rem;
   font-weight: 700;
   box-shadow: 0 8px 16px rgba(0,0,0,0.5);
-  z-index: 100;
+  z-index: 150;
 }
 .toast.hidden { opacity: 0; pointer-events: none; }
 
 .modal-overlay {
   position: fixed;
   inset: 0;
-  background: rgba(0,0,0,0.7);
+  background: rgba(0,0,0,0.75);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -230,8 +277,9 @@ html, body {
   width: 100%;
   max-width: 360px;
   padding: 16px;
+  max-height: 80vh;
+  overflow-y: auto;
 }
-
 .modal-header {
   display: flex;
   justify-content: space-between;
@@ -239,7 +287,7 @@ html, body {
   margin-bottom: 12px;
 }
 .close-btn { background: none; border: none; font-size: 1.4rem; color: #94a3b8; cursor: pointer; }
-.word-pill {
+.word-pill, .leader-pill {
   background: #1e293b;
   padding: 8px 12px;
   border-radius: 8px;
@@ -247,6 +295,4 @@ html, body {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  cursor: pointer;
 }
-.word-pill:hover { background: #334155; }

@@ -4,32 +4,39 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <meta name="theme-color" content="#0b0f19">
 
-  <!-- Android & Chrome Configuration -->
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="theme-color" content="#0b0f19">
   <link rel="icon" type="image/png" sizes="192x192" href="{% static 'game/icons/icon-192.png' %}">
-  <link rel="icon" type="image/png" sizes="512x512" href="{% static 'game/icons/icon-512.png' %}">
-
-  <!-- iOS Configuration -->
-  <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <meta name="apple-mobile-web-app-title" content="Crossword">
   <link rel="apple-touch-icon" href="{% static 'game/icons/icon-192.png' %}">
 
   <title>Crossword Duel</title>
   <link rel="manifest" href="{% static 'game/manifest.json' %}">
-  <link rel="stylesheet" href="{% static 'game/css/style.css' %}?v=6">
+  <link rel="stylesheet" href="{% static 'game/css/style.css' %}?v=7">
 </head>
 <body>
 
+  <!-- Floating Canvas for Confetti -->
+  <canvas id="confetti-canvas"></canvas>
+
   <div class="game-wrapper">
+    <!-- Top Stat Bar -->
+    <div class="stat-bar">
+      <div class="stat-pill">⏱ <span id="timer-text">02:00</span></div>
+      <div class="stat-pill">🎒 Bag: <span id="bag-count">100</span></div>
+      <div class="stat-pill bot-pill" id="bot-indicator">🤖 Solo Mode</div>
+    </div>
+
     <!-- Header -->
     <header class="game-header">
-      <div class="score-badge">SCORE: <span id="score">0</span></div>
+      <div class="scores-group">
+        <div class="score-badge">YOU: <span id="score">0</span></div>
+        <div class="score-badge bot-score" id="bot-score-badge" style="display: none;">BOT: <span id="bot-score">0</span></div>
+      </div>
       <div class="header-actions">
-        <button id="history-btn" class="btn icon-btn" title="Played Words">📖</button>
+        <button id="leaderboard-btn" class="btn icon-btn" title="Leaderboard">🏆</button>
+        <button id="mode-btn" class="btn icon-btn" title="Toggle AI Match">🤖</button>
+        <button id="history-btn" class="btn icon-btn" title="Word History">📖</button>
         <button id="submit-btn" class="btn primary">Play Word ➔</button>
       </div>
     </header>
@@ -38,6 +45,12 @@
     <main class="grid-container">
       <div id="board" class="crossword-grid"></div>
     </main>
+
+    <!-- Live Word & Score Preview Pill -->
+    <div id="word-preview" class="word-preview hidden">
+      <span id="preview-word">---</span>
+      <span id="preview-score" class="preview-pts">+0 pts</span>
+    </div>
 
     <!-- Control Buttons -->
     <div class="controls">
@@ -54,20 +67,18 @@
   <!-- Toast Notification -->
   <div id="message-toast" class="toast hidden"></div>
 
-  <!-- Dictionary & Word History Modal -->
+  <!-- General Modal (Definitions / History / Leaderboard / Game Over) -->
   <div id="modal-overlay" class="modal-overlay hidden">
     <div class="modal-card">
       <div class="modal-header">
-        <h3 id="modal-title">Word History</h3>
+        <h3 id="modal-title">Modal</h3>
         <button id="modal-close" class="close-btn">&times;</button>
       </div>
-      <div id="modal-body" class="modal-body">
-        <p class="empty-history">No words played yet.</p>
-      </div>
+      <div id="modal-body" class="modal-body"></div>
     </div>
   </div>
 
-  <script src="{% static 'game/js/game.js' %}?v=3"></script>
+  <script src="{% static 'game/js/game.js' %}?v=7"></script>
   <script>
     if ('serviceWorker' in navigator) {
       navigator.serviceWorker.register("{% static 'game/js/sw.js' %}");
