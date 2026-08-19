@@ -597,5 +597,64 @@ function showToast(msg, bg = "#ef4444") {
   setTimeout(() => toastEl.classList.add("hidden"), 2500);
 }
 
+const newGameBtn = document.getElementById("new-game-btn");
+
+// New Game Button with confirmation
+newGameBtn.addEventListener("click", () => {
+  if (currentScore > 0 || pendingMoves.length > 0) {
+    if (confirm("Start a new match? Current progress will be reset.")) {
+      restartGame();
+    }
+  } else {
+    restartGame();
+  }
+});
+
+function restartGame() {
+  if (timerInterval) clearInterval(timerInterval);
+  modalOverlay.classList.add("hidden");
+
+  // 1. Reset Game State
+  currentScore = 0;
+  botScore = 0;
+  scoreEl.textContent = "0";
+  if (botScoreEl) botScoreEl.textContent = "0";
+  timeLeft = 120;
+  timerText.textContent = "02:00";
+  isGameOver = false;
+  isFirstTurn = true;
+  bestWordPlayed = "";
+  pendingMoves = [];
+  playerRack = [];
+  playedWordsHistory = [];
+
+  // 2. Refill 100-Tile Bag
+  tileBag = [
+    ...'AAAAAAAAA', ...'BB', ...'CC', ...'DDDD', ...'EEEEEEEEEEEE',
+    ...'FF', ...'GGG', ...'HH', ...'IIIIIIIII', ...'J', ...'K',
+    ...'LLLL', ...'MM', ...'NNNNNN', ...'OOOOOOOO', ...'PP', ...'Q',
+    ...'RRRRRR', ...'SSSS', ...'TTTTTT', ...'UUUU', ...'VV', ...'WW',
+    ...'X', ...'YY', ...'Z'
+  ];
+  bagCountEl.textContent = tileBag.length;
+
+  // 3. Clear Board to Default Multipliers
+  for (let r = 0; r < GRID_SIZE; r++) {
+    for (let c = 0; c < GRID_SIZE; c++) {
+      const cell = boardEl.querySelector(`[data-row='${r}'][data-col='${c}']`);
+      const special = specialTiles[`${r},${c}`];
+      cell.className = "cell" + (special ? ` ${special.cls}` : "");
+      cell.textContent = special ? special.text : "";
+    }
+  }
+
+  wordPreview.classList.add("hidden");
+
+  // 4. Draw Fresh Hand & Start Timer
+  refillRack();
+  startTimer();
+  showToast("New game started!", "#38bdf8");
+}
+
 refillRack();
 startTimer();
