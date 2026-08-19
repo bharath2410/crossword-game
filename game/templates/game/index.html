@@ -4,85 +4,67 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="theme-color" content="#0b0f19">
 
   <meta name="mobile-web-app-capable" content="yes">
-  <meta name="theme-color" content="#0b0f19">
   <link rel="icon" type="image/png" sizes="192x192" href="{% static 'game/icons/icon-192.png' %}">
-  <link rel="apple-touch-icon" href="{% static 'game/icons/icon-192.png' %}">
-
-  <title>Crossword Duel</title>
   <link rel="manifest" href="{% static 'game/manifest.json' %}">
-  <link rel="stylesheet" href="{% static 'game/css/style.css' %}?v=9">
+  <link rel="stylesheet" href="{% static 'game/css/style.css' %}?v=10">
+  <title>Crossword Duel</title>
 </head>
 <body>
 
-  <!-- Floating Canvas for Confetti -->
-  <canvas id="confetti-canvas"></canvas>
-
   <div class="game-wrapper">
-    <!-- Top Stat Bar -->
-    <div class="stat-bar">
-      <div class="stat-pill">⏱ <span id="timer-text">05:00</span></div>
-      <div class="stat-pill">🎒 Bag: <span id="bag-count">100</span></div>
-      <div class="stat-pill bot-pill" id="bot-indicator">🤖 Solo Mode</div>
-    </div>
-
-    <!-- Header -->
-    <header class="game-header">
-      <div class="scores-group">
-        <div class="score-badge">YOU: <span id="score">0</span></div>
-        <div class="score-badge bot-score" id="bot-score-badge" style="display: none;">BOT: <span id="bot-score">0</span></div>
+    <!-- Streamlined Header -->
+    <header class="app-header">
+      <div class="score-card">
+        <span class="score-label">SCORE</span>
+        <span id="score" class="score-val">0</span>
       </div>
-      <div class="header-actions">
-        <button id="new-game-btn" class="btn icon-btn" title="New Game">🔄</button>
-        <button id="leaderboard-btn" class="btn icon-btn" title="Leaderboard">🏆</button>
-        <button id="mode-btn" class="btn icon-btn" title="Toggle AI Match">🤖</button>
-        <button id="history-btn" class="btn icon-btn" title="Word History">📖</button>
-        <button id="submit-btn" class="btn primary">Play Word ➔</button>
+
+      <div class="center-meta">
+        <span id="timer-pill" class="meta-pill">⏱️ 04:30</span>
+        <span id="bag-pill" class="meta-pill">🎒 93 left</span>
+      </div>
+
+      <div class="top-buttons">
+        <button id="history-btn" class="icon-circle-btn" title="Word History">📖</button>
+        <button id="submit-btn" class="btn play-btn">Play ➔</button>
       </div>
     </header>
 
-    <!-- Main Grid -->
+    <!-- Crossword Board -->
     <main class="grid-container">
       <div id="board" class="crossword-grid"></div>
     </main>
 
-    <!-- Live Word & Score Preview Pill -->
-    <div id="word-preview" class="word-preview hidden">
-      <span id="preview-word">---</span>
-      <span id="preview-score" class="preview-pts">+0 pts</span>
-    </div>
+    <!-- Bottom Deck: Controls + Dynamic Rack -->
+    <footer class="bottom-deck">
+      <div class="control-strip">
+        <button id="toggle-dir-btn" class="action-btn">ACROSS →</button>
+        <button id="shuffle-btn" class="action-btn">🔀 Shuffle</button>
+        <button id="swap-btn" class="action-btn">🔄 Swap</button>
+        <button id="clear-btn" class="action-btn danger-text">Clear</button>
+      </div>
 
-    <!-- Control Buttons -->
-    <div class="controls">
-      <button id="shuffle-btn" class="btn secondary">🔀 Shuffle</button>
-      <button id="swap-btn" class="btn warning">🔄 Swap</button>
-      <button id="clear-btn" class="btn danger">Clear</button>
-    </div>
-
-    <!-- Letter Rack -->
-    <div id="rack" class="letter-rack"></div>
+      <div id="rack" class="letter-rack"></div>
+    </footer>
   </div>
 
   <!-- Toast Notification -->
   <div id="message-toast" class="toast hidden"></div>
 
-  <!-- General Modal (Definitions / History / Leaderboard / Game Over) -->
+  <!-- Dictionary & History Modal -->
   <div id="modal-overlay" class="modal-overlay hidden">
     <div class="modal-card">
       <div class="modal-header">
-        <h3 id="modal-title">Modal</h3>
+        <h3 id="modal-title">Word History</h3>
         <button id="modal-close" class="close-btn">&times;</button>
       </div>
       <div id="modal-body" class="modal-body"></div>
     </div>
   </div>
 
-  <script src="{% static 'game/js/game.js' %}?v=7"></script>
-  <script>
-    if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register("{% static 'game/js/sw.js' %}");
-    }
-  </script>
+  <script src="{% static 'game/js/game.js' %}?v=10"></script>
 </body>
 </html>
