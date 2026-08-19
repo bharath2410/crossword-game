@@ -1,8 +1,8 @@
 @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@600;700;800&display=swap');
 
 :root {
-  /* Dynamically scaled to ensure full vertical clearance on all mobile screens */
-  --cell-size: min(8.4vw, 3.8vh, 32px);
+  /* Dynamically clamp to whichever dimension is tighter */
+  --cell-size: min(8.6vw, 4.4vh, 36px);
   --bg-main: #0b0f19;
   --panel-bg: #151d30;
   --board-bg: #1e293b;
@@ -21,6 +21,7 @@
 }
 
 html, body {
+  width: 100%;
   height: 100%;
   height: 100dvh;
   overflow: hidden;
@@ -31,43 +32,46 @@ html, body {
   align-items: center;
 }
 
-/* Full Viewport App Wrapper */
+/* Master App Container - Enforces Center Alignment */
 .game-wrapper {
   width: 100%;
-  max-width: 400px;
+  max-width: 420px;
   height: 100%;
   height: 100dvh;
-  max-height: 100dvh;
+  margin: 0 auto;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
-  padding: env(safe-area-inset-top, 6px) 10px calc(env(safe-area-inset-bottom, 8px) + 6px) 10px;
+  align-items: center;
+  padding: env(safe-area-inset-top, 6px) 12px calc(env(safe-area-inset-bottom, 8px) + 6px) 12px;
 }
 
 /* Header Area */
 .game-header {
+  width: 100%;
   display: flex;
   flex-direction: column;
   gap: 4px;
-  width: 100%;
 }
 
 .top-stats-row {
+  width: 100%;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  font-size: 0.78rem;
+  font-size: 0.8rem;
   font-weight: 700;
 }
 
 .stat-pill {
   background: rgba(255, 255, 255, 0.08);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  padding: 3px 8px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  padding: 4px 8px;
   border-radius: 8px;
 }
 
 .main-header-row {
+  width: 100%;
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -76,7 +80,7 @@ html, body {
 .score-badge {
   background: rgba(255, 255, 255, 0.08);
   border: 1px solid rgba(255, 255, 255, 0.12);
-  padding: 4px 10px;
+  padding: 5px 10px;
   border-radius: 8px;
   font-size: 0.85rem;
   font-weight: 700;
@@ -85,12 +89,13 @@ html, body {
 
 .header-actions {
   display: flex;
-  gap: 4px;
+  gap: 5px;
   align-items: center;
 }
 
-/* Board Grid */
+/* Board Container & Center Alignment */
 .grid-container {
+  width: 100%;
   display: flex;
   justify-content: center;
   align-items: center;
@@ -101,16 +106,17 @@ html, body {
   display: grid;
   grid-template-columns: repeat(10, var(--cell-size));
   grid-template-rows: repeat(10, var(--cell-size));
-  gap: 2px;
+  gap: 2.5px;
   background: #0f172a;
-  padding: 3px;
-  border-radius: 8px;
-  box-shadow: inset 0 2px 6px rgba(0, 0, 0, 0.8), 0 4px 14px rgba(0,0,0,0.5);
+  padding: 4px;
+  border-radius: 10px;
+  box-shadow: inset 0 2px 6px rgba(0, 0, 0, 0.8), 0 6px 18px rgba(0, 0, 0, 0.5);
+  margin: 0 auto;
 }
 
 .cell {
   background-color: var(--board-bg);
-  border-radius: 3px;
+  border-radius: 4px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -120,7 +126,7 @@ html, body {
   cursor: pointer;
 }
 
-/* Multiplier Cells */
+/* Multipliers */
 .cell.dl { background: #0369a1; font-size: calc(var(--cell-size) * 0.32); color: #bae6fd; font-weight: 700; }
 .cell.tw { background: #b91c1c; font-size: calc(var(--cell-size) * 0.32); color: #fecaca; font-weight: 700; }
 .cell.center-star { background: #d97706; color: #fff; font-size: calc(var(--cell-size) * 0.45); }
@@ -131,23 +137,16 @@ html, body {
   box-shadow: 0 0 6px rgba(59, 130, 246, 0.7);
 }
 
-@keyframes tilePop {
-  0% { transform: scale(0.6); opacity: 0; }
-  80% { transform: scale(1.1); }
-  100% { transform: scale(1); opacity: 1; }
-}
-
 .cell.occupied {
   background: var(--tile-bg);
   color: var(--text-dark);
   border: 1px solid var(--tile-border);
   box-shadow: 0 2px 0 #a16207;
-  animation: tilePop 0.18s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
 }
 
 .cell .point-subscript, .rack-tile .point-subscript {
   position: absolute;
-  bottom: 1px;
+  bottom: 1.5px;
   right: 2px;
   font-size: calc(var(--cell-size) * 0.22);
   font-weight: 800;
@@ -155,17 +154,18 @@ html, body {
   color: #78350f;
 }
 
-/* Control Buttons */
+/* Controls Grid */
 .controls {
+  width: 100%;
   display: grid;
   grid-template-columns: repeat(4, 1fr);
   gap: 4px;
-  width: 100%;
+  margin-bottom: 4px;
 }
 
 .btn {
-  padding: 7px 2px;
-  border-radius: 7px;
+  padding: 8px 2px;
+  border-radius: 8px;
   border: none;
   font-weight: 700;
   font-size: 0.75rem;
@@ -173,6 +173,7 @@ html, body {
   display: flex;
   align-items: center;
   justify-content: center;
+  text-align: center;
 }
 
 .btn:active { transform: translateY(1px); }
@@ -184,18 +185,19 @@ html, body {
 
 /* Letter Rack */
 .letter-rack {
+  width: 100%;
   display: flex;
   gap: 4px;
   justify-content: center;
   background: rgba(0, 0, 0, 0.45);
-  padding: 5px;
-  border-radius: 10px;
-  border: 1px solid rgba(255,255,255,0.06);
+  padding: 6px 4px;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.06);
 }
 
 .rack-tile {
   width: var(--cell-size);
-  height: calc(var(--cell-size) * 1.2);
+  height: calc(var(--cell-size) * 1.22);
   background: var(--tile-bg);
   color: var(--text-dark);
   display: flex;
@@ -203,9 +205,9 @@ html, body {
   justify-content: center;
   font-size: calc(var(--cell-size) * 0.52);
   font-weight: 800;
-  border-radius: 5px;
+  border-radius: 6px;
   border: 1px solid var(--tile-border);
-  box-shadow: 0 2px 0 #a16207, 0 3px 6px rgba(0,0,0,0.3);
+  box-shadow: 0 2px 0 #a16207, 0 3px 6px rgba(0, 0, 0, 0.3);
   cursor: pointer;
   position: relative;
 }
@@ -215,7 +217,7 @@ html, body {
   transform: translateY(-3px);
 }
 
-/* Toast & Modals */
+/* Modals & Toasts */
 .toast {
   position: fixed;
   top: 10px;
@@ -232,7 +234,7 @@ html, body {
 .modal-overlay {
   position: fixed;
   inset: 0;
-  background: rgba(0,0,0,0.7);
+  background: rgba(0, 0, 0, 0.7);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -243,7 +245,7 @@ html, body {
 
 .modal-card {
   background: var(--panel-bg);
-  border: 1px solid rgba(255,255,255,0.1);
+  border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: 14px;
   width: 100%;
   max-width: 340px;
