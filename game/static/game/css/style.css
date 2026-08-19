@@ -1,5 +1,3 @@
-@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@600;700;800&display=swap');
-
 :root {
   /* Dynamic cell size clamped strictly to viewport width AND height */
   --cell-size: min(8.2vw, 3.8vh, 32px);
@@ -260,6 +258,7 @@ html, body {
   gap: 4px;
   justify-content: center;
   width: 100%;
+  min-height: calc(var(--cell-size) * 1.25); /* Locks rack container height */
 }
 
 .rack-tile {
@@ -277,6 +276,15 @@ html, body {
   box-shadow: 0 2px 0 #a16207, 0 3px 6px rgba(0, 0, 0, 0.3);
   cursor: pointer;
   position: relative;
+  flex-shrink: 0;
+}
+
+/* Skeleton state while loading */
+.rack-tile.skeleton {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px dashed rgba(255, 255, 255, 0.15);
+  box-shadow: none;
+  cursor: default;
 }
 
 .rack-tile.selected-tile {

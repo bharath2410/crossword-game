@@ -6,24 +6,29 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <meta name="theme-color" content="#0b0f19">
 
+  <!-- Preconnect & Preload Fonts to prevent FOUT layout shift -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@600;700;800&display=swap" rel="stylesheet">
+
   <meta name="mobile-web-app-capable" content="yes">
   <link rel="icon" type="image/png" sizes="192x192" href="{% static 'game/icons/icon-192.png' %}">
   <link rel="manifest" href="{% static 'game/manifest.json' %}">
-  <link rel="stylesheet" href="{% static 'game/css/style.css' %}?v=13">
+  <link rel="stylesheet" href="{% static 'game/css/style.css' %}?v=15">
   <title>Crossword Duel</title>
 </head>
 <body>
   <canvas id="confetti-canvas"></canvas>
 
   <div class="game-wrapper">
-    <!-- Top Stat Row -->
+    <!-- Stat Bar -->
     <div class="stat-bar">
       <span class="stat-pill" id="bot-indicator">👤 Solo Mode</span>
       <span class="stat-pill">🎒 <span id="bag-count">100</span> left</span>
       <span class="stat-pill">⏱️ <span id="timer-text">05:00</span></span>
     </div>
 
-    <!-- Main Header -->
+    <!-- Header -->
     <header class="app-header">
       <div class="scores-group">
         <div class="score-card">
@@ -64,11 +69,20 @@
         <button id="clear-btn" class="action-btn danger-text">Clear</button>
       </div>
 
-      <div id="rack" class="letter-rack"></div>
+      <!-- Pre-rendered rack slots to reserve height instantly -->
+      <div id="rack" class="letter-rack">
+        <div class="rack-tile skeleton"></div>
+        <div class="rack-tile skeleton"></div>
+        <div class="rack-tile skeleton"></div>
+        <div class="rack-tile skeleton"></div>
+        <div class="rack-tile skeleton"></div>
+        <div class="rack-tile skeleton"></div>
+        <div class="rack-tile skeleton"></div>
+      </div>
     </footer>
   </div>
 
-  <!-- Toast Notification -->
+  <!-- Toast -->
   <div id="message-toast" class="toast hidden"></div>
 
   <!-- Modal -->
@@ -82,19 +96,6 @@
     </div>
   </div>
 
-  <script src="{% static 'game/js/game.js' %}?v=14"></script>
-  <script>
-    // Clear old service worker caches so outdated styles never reload
-    if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.getRegistrations().then(registrations => {
-        for (let registration of registrations) {
-          registration.unregister();
-        }
-      });
-      caches.keys().then(keys => {
-        keys.forEach(key => caches.delete(key));
-      });
-    }
-  </script>
+  <script src="{% static 'game/js/game.js' %}?v=15"></script>
 </body>
 </html>
