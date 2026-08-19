@@ -55,7 +55,6 @@ html, body {
   font-size: 0.76rem;
   font-weight: 700;
   color: #94a3b8;
-  margin-bottom: 2px;
 }
 .stat-pill {
   background: rgba(255, 255, 255, 0.05);
@@ -70,7 +69,6 @@ html, body {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 2px;
 }
 .scores-group { display: flex; gap: 6px; }
 .score-badge {
@@ -83,10 +81,9 @@ html, body {
 }
 .score-badge span { color: #38bdf8; }
 .score-badge.bot-score span { color: #f43f5e; }
-
 .header-actions { display: flex; gap: 5px; }
 
-/* Board Grid */
+/* Board */
 .grid-container {
   display: flex;
   justify-content: center;
@@ -127,6 +124,10 @@ html, body {
   color: #fff;
   box-shadow: 0 0 8px rgba(59, 130, 246, 0.7);
 }
+.cell.keyboard-cursor {
+  outline: 2px dashed #f59e0b;
+  outline-offset: -2px;
+}
 
 @keyframes tilePop {
   0% { transform: scale(0.6); opacity: 0; }
@@ -142,6 +143,11 @@ html, body {
   animation: tilePop 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
 }
 
+.cell.occupied.wildcard, .rack-tile.wildcard {
+  background: linear-gradient(145deg, #e0e7ff, #c7d2fe);
+  border-color: #6366f1;
+}
+
 .cell .point-subscript, .rack-tile .point-subscript {
   position: absolute;
   bottom: 2px;
@@ -152,7 +158,7 @@ html, body {
   color: #78350f;
 }
 
-/* Floating Score Popup */
+/* Floating Score */
 @keyframes floatUp {
   0% { opacity: 1; transform: translateY(0) scale(1); }
   100% { opacity: 0; transform: translateY(-35px) scale(1.2); }
@@ -168,7 +174,7 @@ html, body {
   z-index: 50;
 }
 
-/* Live Word Preview Pill */
+/* Live Preview */
 .word-preview {
   background: #1e293b;
   border: 1px solid #38bdf8;
@@ -191,7 +197,7 @@ html, body {
 .controls {
   display: grid;
   grid-template-columns: 1fr 1fr 1fr;
-  gap: 5px;
+  gap: 6px;
   width: 100%;
 }
 .btn {
@@ -199,7 +205,7 @@ html, body {
   border-radius: 8px;
   border: none;
   font-weight: 700;
-  font-size: 0.75rem;
+  font-size: 0.78rem;
   cursor: pointer;
   display: flex;
   align-items: center;
@@ -212,7 +218,7 @@ html, body {
 .btn.danger { background: #ef4444; color: white; box-shadow: 0 3px 0 #b91c1c; }
 .btn.icon-btn { background: #334155; padding: 0 8px; font-size: 0.9rem; }
 
-/* Rack */
+/* Rack & Tile Shuffle Animation */
 .letter-rack {
   display: flex;
   gap: 5px;
@@ -222,6 +228,17 @@ html, body {
   border-radius: 12px;
   border: 1px solid rgba(255,255,255,0.06);
 }
+
+@keyframes shuffleBounce {
+  0% { transform: translateY(0) rotate(0deg); }
+  50% { transform: translateY(-12px) rotate(15deg) scale(1.1); }
+  100% { transform: translateY(0) rotate(0deg); }
+}
+
+.rack-tile.shuffling {
+  animation: shuffleBounce 0.35s ease-in-out;
+}
+
 .rack-tile {
   width: var(--cell-size);
   height: calc(var(--cell-size) * 1.18);
@@ -235,15 +252,17 @@ html, body {
   border-radius: 6px;
   border: 1px solid var(--tile-border);
   box-shadow: 0 3px 0 #a16207, 0 4px 8px rgba(0,0,0,0.3);
-  cursor: pointer;
+  cursor: grab;
   position: relative;
+  transition: transform 0.15s ease;
 }
+
 .rack-tile.selected-tile {
   outline: 2.5px solid #38bdf8;
   transform: translateY(-3px);
 }
 
-/* Modals & Toasts */
+/* Modals */
 .toast {
   position: fixed;
   top: 14px;
@@ -296,3 +315,20 @@ html, body {
   justify-content: space-between;
   align-items: center;
 }
+.wildcard-picker {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 5px;
+  margin-top: 10px;
+}
+.wildcard-btn {
+  background: #1e293b;
+  color: #fff;
+  border: 1px solid #334155;
+  border-radius: 6px;
+  padding: 8px 0;
+  font-size: 1.1rem;
+  font-weight: 800;
+  cursor: pointer;
+}
+.wildcard-btn:active { background: #38bdf8; }

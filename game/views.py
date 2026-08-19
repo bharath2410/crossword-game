@@ -3,7 +3,7 @@ from django.shortcuts import render
 from django.http import JsonResponse
 from django.views.decorators.csrf import ensure_csrf_cookie
 from .models import HighScore
-from .services import validate_game_rules, calculate_word_score, find_bot_move
+from .services import validate_entire_turn, find_bot_move
 
 @ensure_csrf_cookie
 def game_view(request):
@@ -15,19 +15,23 @@ def validate_move(request):
 
     try:
         data = json.loads(request.body)
-        word = data.get("word", "").strip().upper()
-        row = int(data.get("row", 0))
-        col = int(data.get("col", 0))
-        direction = data.get("direction", "across")
+        board_state = data.get("board", {})       # {"r,c": "A"}
+        newly_placed = data.get("new_tiles", [])   # [{'row': 4, 'col': 2, 'char': 'C', 'is_blank': False}]
         is_first_turn = bool(data.get("is_first_turn", False))
-        connected_to_existing = bool(data.get("connected_to_existing", False))
 
-        is_valid, msg = validate_game_rules(word, row, col, direction, is_first_turn, connected_to_existing)
+        is_valid, msg, total_pts, words_formed = validate_entire_turn(board_state, newly_placed, is_first_turn)
         if not is_valid:
             return JsonResponse({"valid": False, "message": msg})
 
-        points = calculate_word_score(word, start_row=row, start_col=col, direction=direction)
-        return JsonResponse({"valid": True, "word": word, "points": points, "message": f"+{points} pts for '{word}'!"})
+        bingo = (len(newly_placed) == 7)
+        words_label = ", ".join(words_formed)
+        bingo_text = " 💥 50-pt BINGO!" if bingo else ""
+        return JsonResponse({
+            "valid": True,
+            "words": words_formed,
+            "points": total_pts,
+            "message": f"+{total_pts} pts ({words_label}){bingo_text}!"
+        })
 
     except Exception as e:
         return JsonResponse({"error": str(e)}, status=400)
@@ -35,12 +39,10 @@ def validate_move(request):
 def bot_move(request):
     if request.method != "POST":
         return JsonResponse({"error": "POST required"}, status=405)
-
     try:
         data = json.loads(request.body)
-        board_state = data.get("board", {})  # {"r,c": "A"}
+        board_state = data.get("board", {})
         bot_rack = data.get("bot_rack", ["C", "A", "T", "E", "R", "S", "T"])
-
         move = find_bot_move(board_state, bot_rack)
         if move:
             return JsonResponse({"success": True, "move": move})
@@ -50,23 +52,18 @@ def bot_move(request):
 
 def get_leaderboard(request):
     scores = HighScore.objects.all()[:10]
-    data = [
-        {"player_name": s.player_name, "score": s.score, "best_word": s.best_word, "date": s.created_at.strftime("%b %d")}
-        for s in scores
-    ]
+    data = [{"player_name": s.player_name, "score": s.score, "best_word": s.best_word, "date": s.created_at.strftime("%b %d")} for s in scores]
     return JsonResponse({"leaderboard": data})
 
 def submit_score(request):
     if request.method != "POST":
         return JsonResponse({"error": "POST required"}, status=405)
-
     try:
         data = json.loads(request.body)
         name = data.get("name", "Anonymous").strip()[:20] or "Anonymous"
         score = int(data.get("score", 0))
         best_word = data.get("best_word", "")[:20]
-
-        entry = HighScore.objects.create(player_name=name, score=score, best_word=best_word)
-        return JsonResponse({"success": True, "id": entry.id})
+        HighScore.objects.create(player_name=name, score=score, best_word=best_word)
+        return JsonResponse({"success": True})
     except Exception as e:
         return JsonResponse({"error": str(e)}, status=400)
