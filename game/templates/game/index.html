@@ -82,6 +82,19 @@
     </div>
   </div>
 
-  <script src="{% static 'game/js/game.js' %}?v=13"></script>
+  <script src="{% static 'game/js/game.js' %}?v=14"></script>
+  <script>
+    // Clear old service worker caches so outdated styles never reload
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.getRegistrations().then(registrations => {
+        for (let registration of registrations) {
+          registration.unregister();
+        }
+      });
+      caches.keys().then(keys => {
+        keys.forEach(key => caches.delete(key));
+      });
+    }
+  </script>
 </body>
 </html>
