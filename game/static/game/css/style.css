@@ -1,7 +1,8 @@
 @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@600;700;800&display=swap');
 
 :root {
-  --cell-size: min(8.6vw, 38px);
+  /* Dynamically clamp cell size to fit both short screens (vh) and narrow screens (vw) */
+  --cell-size: min(8.2vw, 4.8vh, 36px);
   --bg-main: #0b0f19;
   --panel-bg: #151d30;
   --board-bg: #1e293b;
@@ -30,16 +31,17 @@ html, body {
   align-items: center;
 }
 
-/* Full Viewport App Wrapper */
+/* Full Viewport App Wrapper with Safe Area Support */
 .game-wrapper {
   width: 100%;
   max-width: 420px;
   height: 100%;
+  height: 100dvh;
   max-height: 100dvh;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
-  padding: 10px 14px 14px 14px;
+  padding: env(safe-area-inset-top, 8px) 12px calc(env(safe-area-inset-bottom, 12px) + 8px) 12px;
 }
 
 /* Header */
@@ -47,14 +49,15 @@ html, body {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  margin-bottom: 2px;
 }
 
 .score-badge {
   background: rgba(255, 255, 255, 0.06);
   border: 1px solid rgba(255, 255, 255, 0.12);
-  padding: 6px 12px;
+  padding: 5px 12px;
   border-radius: 10px;
-  font-size: 0.95rem;
+  font-size: 0.9rem;
   font-weight: 700;
 }
 .score-badge span { color: #38bdf8; }
@@ -64,22 +67,23 @@ html, body {
   gap: 8px;
 }
 
-/* Board */
+/* Board Grid */
 .grid-container {
   display: flex;
   justify-content: center;
   align-items: center;
+  margin: auto 0;
 }
 
 .crossword-grid {
   display: grid;
   grid-template-columns: repeat(10, var(--cell-size));
   grid-template-rows: repeat(10, var(--cell-size));
-  gap: 3px;
+  gap: 2.5px;
   background: #0f172a;
   padding: 4px;
   border-radius: 10px;
-  box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.8), 0 8px 24px rgba(0,0,0,0.5);
+  box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.8), 0 6px 20px rgba(0,0,0,0.5);
 }
 
 .cell {
@@ -89,26 +93,26 @@ html, body {
   align-items: center;
   justify-content: center;
   position: relative;
-  font-size: 1.05rem;
+  font-size: calc(var(--cell-size) * 0.48);
   font-weight: 800;
   cursor: pointer;
 }
 
 /* Multiplier Cells */
-.cell.dl { background: #0369a1; font-size: 0.65rem; color: #bae6fd; font-weight: 700; }
-.cell.tw { background: #b91c1c; font-size: 0.65rem; color: #fecaca; font-weight: 700; }
-.cell.center-star { background: #d97706; color: #fff; font-size: 0.95rem; }
+.cell.dl { background: #0369a1; font-size: calc(var(--cell-size) * 0.32); color: #bae6fd; font-weight: 700; }
+.cell.tw { background: #b91c1c; font-size: calc(var(--cell-size) * 0.32); color: #fecaca; font-weight: 700; }
+.cell.center-star { background: #d97706; color: #fff; font-size: calc(var(--cell-size) * 0.45); }
 
 /* Active & Placed Tile Styles */
 .cell.selected {
   background: #3b82f6;
   color: #fff;
-  box-shadow: 0 0 10px rgba(59, 130, 246, 0.7);
+  box-shadow: 0 0 8px rgba(59, 130, 246, 0.7);
 }
 
 @keyframes tilePop {
   0% { transform: scale(0.6); opacity: 0; }
-  80% { transform: scale(1.15); }
+  80% { transform: scale(1.12); }
   100% { transform: scale(1); opacity: 1; }
 }
 
@@ -116,15 +120,15 @@ html, body {
   background: var(--tile-bg);
   color: var(--text-dark);
   border: 1px solid var(--tile-border);
-  box-shadow: 0 3px 0 #a16207;
+  box-shadow: 0 2px 0 #a16207;
   animation: tilePop 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
 }
 
 .cell .point-subscript, .rack-tile .point-subscript {
   position: absolute;
   bottom: 2px;
-  right: 3px;
-  font-size: 0.5rem;
+  right: 2.5px;
+  font-size: calc(var(--cell-size) * 0.24);
   font-weight: 800;
   line-height: 1;
   color: #78350f;
@@ -134,16 +138,17 @@ html, body {
 .controls {
   display: grid;
   grid-template-columns: 1.2fr 1fr 1fr 0.8fr;
-  gap: 6px;
+  gap: 5px;
   width: 100%;
+  margin-top: 4px;
 }
 
 .btn {
-  padding: 9px 4px;
+  padding: 8px 4px;
   border-radius: 8px;
   border: none;
   font-weight: 700;
-  font-size: 0.8rem;
+  font-size: 0.78rem;
   cursor: pointer;
   display: flex;
   align-items: center;
@@ -162,10 +167,11 @@ html, body {
   display: flex;
   gap: 5px;
   justify-content: center;
-  background: rgba(0, 0, 0, 0.4);
-  padding: 8px;
+  background: rgba(0, 0, 0, 0.45);
+  padding: 6px;
   border-radius: 12px;
-  border: 1px solid rgba(255,255,255,0.05);
+  border: 1px solid rgba(255,255,255,0.06);
+  margin-top: 4px;
 }
 
 .rack-tile {
@@ -176,7 +182,7 @@ html, body {
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 1.15rem;
+  font-size: calc(var(--cell-size) * 0.52);
   font-weight: 800;
   border-radius: 6px;
   border: 1px solid var(--tile-border);
@@ -186,19 +192,19 @@ html, body {
 }
 
 .rack-tile.selected-tile {
-  outline: 3px solid #38bdf8;
-  transform: translateY(-4px);
+  outline: 2.5px solid #38bdf8;
+  transform: translateY(-3px);
 }
 
-/* Modal and Toast */
+/* Modals & Toasts */
 .toast {
   position: fixed;
-  top: 16px;
+  top: 14px;
   background: #ef4444;
   color: white;
-  padding: 8px 18px;
+  padding: 7px 16px;
   border-radius: 20px;
-  font-size: 0.85rem;
+  font-size: 0.82rem;
   font-weight: 700;
   box-shadow: 0 8px 16px rgba(0,0,0,0.5);
   z-index: 100;
