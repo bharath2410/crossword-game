@@ -3,34 +3,62 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="theme-color" content="#0b0f19">
   <title>Crossword Duel</title>
-  <link rel="stylesheet" href="{% static 'game/css/style.css' %}">
+  <link rel="manifest" href="{% static 'game/manifest.json' %}">
+  <link rel="stylesheet" href="{% static 'game/css/style.css' %}?v=3">
 </head>
 <body>
 
-  <div class="game-card">
+  <div class="game-wrapper">
+    <!-- Header -->
     <header class="game-header">
       <div class="score-badge">SCORE: <span id="score">0</span></div>
-      <button id="submit-btn" class="btn primary">Play Word ➔</button>
+      <div class="header-actions">
+        <button id="history-btn" class="btn icon-btn" title="Played Words">📖</button>
+        <button id="submit-btn" class="btn primary">Play Word ➔</button>
+      </div>
     </header>
 
-    <main>
+    <!-- Main Grid -->
+    <main class="grid-container">
       <div id="board" class="crossword-grid"></div>
-
-      <div class="controls">
-        <button id="toggle-dir-btn" class="btn secondary">ACROSS ➔</button>
-        <button id="shuffle-btn" class="btn secondary">🔀 Shuffle</button>
-        <button id="swap-btn" class="btn warning">🔄 Swap</button>
-        <button id="clear-btn" class="btn danger">Clear</button>
-      </div>
-
-      <div id="rack" class="letter-rack"></div>
     </main>
+
+    <!-- Control Buttons -->
+    <div class="controls">
+      <button id="toggle-dir-btn" class="btn secondary">ACROSS ➔</button>
+      <button id="shuffle-btn" class="btn secondary">🔀 Shuffle</button>
+      <button id="swap-btn" class="btn warning">🔄 Swap</button>
+      <button id="clear-btn" class="btn danger">Clear</button>
+    </div>
+
+    <!-- Letter Rack -->
+    <div id="rack" class="letter-rack"></div>
   </div>
 
+  <!-- Toast Notification -->
   <div id="message-toast" class="toast hidden"></div>
 
-  <script src="{% static 'game/js/game.js' %}"></script>
+  <!-- Dictionary & Word History Modal -->
+  <div id="modal-overlay" class="modal-overlay hidden">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h3 id="modal-title">Word History</h3>
+        <button id="modal-close" class="close-btn">&times;</button>
+      </div>
+      <div id="modal-body" class="modal-body">
+        <p class="empty-history">No words played yet.</p>
+      </div>
+    </div>
+  </div>
+
+  <script src="{% static 'game/js/game.js' %}?v=3"></script>
+  <script>
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register("{% static 'game/js/sw.js' %}");
+    }
+  </script>
 </body>
 </html>

@@ -2,7 +2,7 @@ import json
 from django.shortcuts import render
 from django.http import JsonResponse
 from django.views.decorators.csrf import ensure_csrf_cookie
-from .services import is_valid_word, calculate_word_score
+from .services import validate_game_rules, calculate_word_score
 
 @ensure_csrf_cookie
 def game_view(request):
@@ -18,22 +18,15 @@ def validate_move(request):
         row = int(data.get("row", 0))
         col = int(data.get("col", 0))
         direction = data.get("direction", "across")
+        is_first_turn = bool(data.get("is_first_turn", False))
+        connected_to_existing = bool(data.get("connected_to_existing", False))
 
-        if not word:
-            return JsonResponse({"valid": False, "message": "Word cannot be empty."})
+        is_valid, msg = validate_game_rules(word, row, col, direction, is_first_turn, connected_to_existing)
+        if not is_valid:
+            return JsonResponse({"valid": False, "message": msg})
 
-        if not is_valid_word(word):
-            return JsonResponse({"valid": False, "message": f"'{word}' is not in the dictionary."})
-
-        grid_limit = 10
-        if direction == "across" and (col + len(word) > grid_limit):
-            return JsonResponse({"valid": False, "message": "Word exceeds board boundary."})
-        elif direction == "down" and (row + len(word) > grid_limit):
-            return JsonResponse({"valid": False, "message": "Word exceeds board boundary."})
-
-        # In game/views.py:
         points = calculate_word_score(word, start_row=row, start_col=col, direction=direction)
-        return JsonResponse({"valid": True, "word": word, "points": points, "message": f"+{points} points!"})
+        return JsonResponse({"valid": True, "word": word, "points": points, "message": f"+{points} pts for '{word}'!"})
 
     except Exception as e:
         return JsonResponse({"error": str(e)}, status=400)
