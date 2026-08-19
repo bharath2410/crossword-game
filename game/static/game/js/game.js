@@ -1,5 +1,6 @@
 const GRID_SIZE = 10;
 const RACK_SIZE = 7;
+const MATCH_DURATION = 300;
 
 const boardEl = document.getElementById("board");
 const rackEl = document.getElementById("rack");
@@ -43,7 +44,7 @@ let isBotThinking = false;
 let bestWordPlayed = "";
 
 // Blitz Mode Timer & Tile Bag
-let timeLeft = 120;
+let timeLeft = MATCH_DURATION;
 let timerInterval = null;
 let isGameOver = false;
 let tileBag = [
@@ -619,8 +620,8 @@ function restartGame() {
   botScore = 0;
   scoreEl.textContent = "0";
   if (botScoreEl) botScoreEl.textContent = "0";
-  timeLeft = 120;
-  timerText.textContent = "02:00";
+  timeLeft = MATCH_DURATION;
+  timerText.textContent = "05:00";
   isGameOver = false;
   isFirstTurn = true;
   bestWordPlayed = "";
