@@ -142,15 +142,55 @@ swapBtn.addEventListener("click", () => {
 
 clearBtn.addEventListener("click", resetPendingMoves);
 
-// 5. Submit Word
+// 5. Submit Word (with Board Traversal for Intersecting / Connected Tiles)
 submitBtn.addEventListener("click", async () => {
   if (pendingMoves.length === 0) {
     showToast("Place letters on the board first!");
     return;
   }
 
+  // 1. Sort pending moves along the active axis
   pendingMoves.sort((a, b) => (direction === "across" ? a.col - b.col : a.row - b.row));
-  const word = pendingMoves.map(m => m.letter).join("");
+
+  // 2. Find the full continuous word bounds on the board
+  let startRow = pendingMoves[0].row;
+  let startCol = pendingMoves[0].col;
+
+  // Step backward to find the true beginning of the word
+  if (direction === "across") {
+    while (startCol > 0 && getCellLetter(startRow, startCol - 1)) {
+      startCol--;
+    }
+  } else {
+    while (startRow > 0 && getCellLetter(startRow - 1, startCol)) {
+      startRow--;
+    }
+  }
+
+  // Step forward from the true beginning to build the full word
+  let fullWord = "";
+  let currRow = startRow;
+  let currCol = startCol;
+
+  while (currRow < GRID_SIZE && currCol < GRID_SIZE) {
+    const letter = getCellLetter(currRow, currCol);
+    if (!letter) break; // End of contiguous word
+
+    fullWord += letter;
+
+    if (direction === "across") {
+      currCol++;
+    } else {
+      currRow++;
+    }
+  }
+
+  // 3. Ensure all pending tiles are part of this single continuous line
+  const wordLength = fullWord.length;
+  if (wordLength < 2) {
+    showToast("Words must be at least 2 letters long!");
+    return;
+  }
 
   try {
     const res = await fetch("/api/validate-word/", {
@@ -160,9 +200,9 @@ submitBtn.addEventListener("click", async () => {
         "X-CSRFToken": getCookie("csrftoken")
       },
       body: JSON.stringify({
-        word: word,
-        row: pendingMoves[0].row,
-        col: pendingMoves[0].col,
+        word: fullWord,
+        row: startRow,
+        col: startCol,
         direction: direction
       })
     });
@@ -173,6 +213,7 @@ submitBtn.addEventListener("click", async () => {
       currentScore += data.points;
       scoreEl.textContent = currentScore;
 
+      // Lock placed cells
       pendingMoves.forEach(m => {
         const cell = boardEl.querySelector(`[data-row='${m.row}'][data-col='${m.col}']`);
         cell.classList.remove("selected");
@@ -192,6 +233,12 @@ submitBtn.addEventListener("click", async () => {
     resetPendingMoves();
   }
 });
+
+// Helper function to read the letter in any cell (whether pending or already occupied)
+function getCellLetter(r, c) {
+  const cell = boardEl.querySelector(`[data-row='${r}'][data-col='${c}']`);
+  return cell && cell.textContent ? cell.textContent.trim() : null;
+}
 
 function resetPendingMoves() {
   pendingMoves.forEach(m => {
